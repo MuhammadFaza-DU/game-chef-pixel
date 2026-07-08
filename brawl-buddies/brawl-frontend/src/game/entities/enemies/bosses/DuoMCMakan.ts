@@ -14,6 +14,10 @@ export default class DuoMCMakan extends BaseEnemy {
       tint: variant === 'besar' ? 0xff6348 : 0xffb8b8,
       drop: '🌶️',
       spriteId: variant === 'besar' ? 'duo-mc-besar' : 'duo-mc-kecil',
+      attackCooldownMs: variant === 'besar' ? 1200 : 760,
+      attackWindupMs: variant === 'besar' ? 360 : 220,
+      attackDurationMs: variant === 'besar' ? 700 : 440,
+      attackLunge: variant === 'besar' ? 32 : 22,
     });
     this.setScale(variant === 'besar' ? 1.7 : 1.1);
   }

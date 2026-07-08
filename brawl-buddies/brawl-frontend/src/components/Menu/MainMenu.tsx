@@ -1,7 +1,10 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Button from '../common/Button';
+import StartRunChoiceModal from './StartRunChoiceModal';
 import { setTutorialMode } from '../../game/tutorialMode';
+import { setTargetWorld } from '../../game/targetWorld';
+import { usePlayerStore } from '../../store/usePlayerStore';
 
 /** Siluet koki hero — CSS SVG, warna diatur via className parent */
 function ChefSvg() {
@@ -66,6 +69,37 @@ function BossSvg() {
 export default function MainMenu() {
   const nav = useNavigate();
   const audioRef = useRef<HTMLAudioElement>(null);
+  const savedWorld = usePlayerStore((s) => s.savedWorld);
+  const hasSavedRun = usePlayerStore((s) => s.hasSavedRun);
+  const getStartWorld = usePlayerStore((s) => s.getStartWorld);
+  const clearSavedRun = usePlayerStore((s) => s.clearSavedRun);
+  const [showStartChoice, setShowStartChoice] = useState(false);
+
+  const startFromWorld = (world: number) => {
+    setTutorialMode(false);
+    setTargetWorld(world);
+    nav('/play');
+  };
+
+  const handlePlay = () => {
+    if (hasSavedRun()) {
+      setShowStartChoice(true);
+      return;
+    }
+
+    startFromWorld(1);
+  };
+
+  const handleContinue = () => {
+    setShowStartChoice(false);
+    startFromWorld(getStartWorld());
+  };
+
+  const handleNewGame = () => {
+    clearSavedRun();
+    setShowStartChoice(false);
+    startFromWorld(1);
+  };
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -140,7 +174,7 @@ export default function MainMenu() {
 
         {/* Tombol */}
         <div className="flex flex-col gap-3 items-stretch w-60 mt-1">
-          <Button onClick={() => nav('/play')} style={{ width: '100%' }}>MAIN SEKARANG</Button>
+          <Button onClick={handlePlay} style={{ width: '100%' }}>MAIN SEKARANG</Button>
           <Button
             variant="ghost"
             style={{ width: '100%' }}
@@ -161,6 +195,14 @@ export default function MainMenu() {
           v0.1 · CHAOS KITCHEN STUDIO
         </p>
       </div>
+
+      <StartRunChoiceModal
+        open={showStartChoice}
+        savedWorld={savedWorld}
+        onContinue={handleContinue}
+        onNewGame={handleNewGame}
+        onClose={() => setShowStartChoice(false)}
+      />
 
       <style>{`
         /* Scanlines */

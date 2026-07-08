@@ -15,6 +15,10 @@ export default class ChefBesarMangkukJahat extends BaseEnemy {
       tint: 0x5f27cd,
       drop: '🍳',
       spriteId: 'chef-besar',
+      attackCooldownMs: 1300,
+      attackWindupMs: 430,
+      attackDurationMs: 760,
+      attackLunge: 36,
     });
     this.setScale(2);
   }

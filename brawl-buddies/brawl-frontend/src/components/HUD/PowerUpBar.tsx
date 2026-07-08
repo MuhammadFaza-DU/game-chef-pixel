@@ -28,16 +28,16 @@ export default function PowerUpBar({ powerups }: Props) {
         return (
           <div
             key={p.id}
-            className={`pixel-panel flex items-center gap-2 px-2 py-1 transition-opacity duration-300 ${fading ? 'opacity-40' : 'opacity-100'}`}
+            className={`pixel-panel flex items-center gap-1.5 px-2 py-1 transition-opacity duration-300 sm:gap-2 ${fading ? 'opacity-40' : 'opacity-100'}`}
           >
             <span className="text-base leading-none">{getIcon(p)}</span>
-            <div className="w-20 overflow-hidden rounded bg-black/60" style={{ height: 6, border: '1px solid #1a1a2e' }}>
+            <div className="w-14 overflow-hidden rounded bg-black/60 sm:w-20" style={{ height: 6, border: '1px solid #1a1a2e' }}>
               <div
                 className="h-full transition-all duration-200"
                 style={{ width: `${pct}%`, backgroundColor: barColor }}
               />
             </div>
-            <span className="font-game w-12 text-right text-sm font-bold" style={{ color: barColor }}>
+            <span className="font-game w-9 text-right text-xs font-bold sm:w-12 sm:text-sm" style={{ color: barColor }}>
               {(p.remaining / 1000).toFixed(1)}s
             </span>
           </div>

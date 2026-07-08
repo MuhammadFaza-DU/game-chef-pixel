@@ -12,9 +12,11 @@ const CODES: Record<string, number> = {
   a: 65,
   s: 83,
   d: 68,
+  f: 70,
   j: 74,
   k: 75,
   l: 76,
+  q: 81,
   e: 69,
   escape: 27,
 };

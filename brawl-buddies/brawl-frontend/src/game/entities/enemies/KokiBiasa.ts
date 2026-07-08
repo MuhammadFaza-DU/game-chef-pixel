@@ -12,6 +12,10 @@ export default class KokiBiasa extends BaseEnemy {
       tint: 0xff4757,
       drop: '🍅',
       spriteId: 'koki-biasa',
+      attackCooldownMs: 780,
+      attackWindupMs: 210,
+      attackDurationMs: 420,
+      attackLunge: 18,
     });
     this.setScale(0.9);
   }

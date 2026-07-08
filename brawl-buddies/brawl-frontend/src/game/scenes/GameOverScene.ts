@@ -17,6 +17,8 @@ export default class GameOverScene extends Phaser.Scene {
 
   create(data: GameOverData) {
     const win = !!data.win;
+    setTargetWorld(1);
+    usePlayerStore.getState().clearSavedRun();
 
     this.cameras.main.setBackgroundColor(win ? '#0d1f0d' : '#0d0d1a');
 
@@ -63,14 +65,14 @@ export default class GameOverScene extends Phaser.Scene {
     // Tombol utama — Main Lagi
     this.makeBtn(cx, panelY + 268, '🔁  MAIN LAGI', 0xff4757, 0xff6b81, () => {
       setTargetWorld(1);
-      usePlayerStore.getState().setSavedWorld(null);
+      usePlayerStore.getState().clearSavedRun();
       this.scene.start('CharacterSelectScene', { world: 1 });
     });
 
     // Tombol sekunder — Menu Utama
     this.makeBtn(cx, panelY + 326, '🏠  MENU UTAMA', 0x2f3542, 0x485460, () => {
       setTargetWorld(1);
-      usePlayerStore.getState().setSavedWorld(null);
+      usePlayerStore.getState().clearSavedRun();
       EventBus.emit('game:goto-menu');
     });
   }

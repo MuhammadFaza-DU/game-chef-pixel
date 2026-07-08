@@ -10,7 +10,6 @@ import IngredientSlot from './IngredientSlot';
 import BossHpBar from './BossHpBar';
 import PowerUpBar from './PowerUpBar';
 
-/** Ikon pixel art pause — dua batang vertikal cyan */
 function PauseIcon() {
   return (
     <svg viewBox="0 0 8 10" width="14" height="18" style={{ imageRendering: 'pixelated', display: 'block' }}>
@@ -22,7 +21,6 @@ function PauseIcon() {
   );
 }
 
-/** Overlay HUD React di atas canvas Phaser. Mendengarkan EventBus. */
 export default function HUD({ onPause }: { onPause?: () => void }) {
   const hud = useGameStore();
   const setHud = useGameStore((s) => s.setHud);
@@ -30,14 +28,14 @@ export default function HUD({ onPause }: { onPause?: () => void }) {
   const setMuted = useGameStore((s) => s.setMuted);
   const character = usePlayerStore((s) => s.selectedCharacter);
 
+  const [waveTransition, setWaveTransition] = useState<{ wave: number; total: number } | null>(null);
+  const [showSpecialFail, setShowSpecialFail] = useState(false);
+  const specialFailTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const handleMuteToggle = () => {
     const next = AudioManager.toggle();
     setMuted(next);
   };
-
-  const [waveTransition, setWaveTransition] = useState<{ wave: number; total: number } | null>(null);
-  const [showSpecialFail, setShowSpecialFail] = useState(false);
-  const specialFailTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     const onHud = (state: HudState) => setHud(state);
@@ -67,36 +65,37 @@ export default function HUD({ onPause }: { onPause?: () => void }) {
     };
   }, []);
 
-  // Wave indicator: dots saat GameScene, "🔥 BOSS!" saat BossScene
   const waveIndicator = hud.isBoss
-    ? '🔥 BOSS!'
+    ? 'BOSS'
     : Array.from({ length: hud.totalWaves }, (_, i) =>
         i < hud.wave - 1 ? '●' : i === hud.wave - 1 ? '◉' : '○',
-      ).join('  ');
+      ).join(' ');
 
   return (
-    <div className="pointer-events-none absolute inset-0 flex flex-col justify-between p-4">
-      {/* Boss HP Bar — top center */}
+    <div className="pointer-events-none absolute inset-0 flex flex-col justify-between p-2 sm:p-4">
       <BossHpBar />
 
-      {/* Baris atas: HP kiri, combo tengah, world+wave kanan */}
-      <div className="flex items-start justify-between">
+      <div className="flex items-start justify-between gap-2">
         <HealthBar hp={hud.hp} maxHp={hud.maxHp} energy={hud.energy} name={CHARACTERS[character].name} />
-        <ComboCounter hits={hud.combo.hits} multiplier={hud.combo.multiplier} score={hud.combo.score} />
+
+        <div className="hidden sm:block">
+          <ComboCounter hits={hud.combo.hits} multiplier={hud.combo.multiplier} score={hud.combo.score} />
+        </div>
+
         <div className="flex items-start gap-2">
-          <div className="pixel-panel px-4 py-2 text-center">
+          <div className="pixel-panel px-2 py-1 text-center sm:px-4 sm:py-2">
             <div className="font-pixel text-[8px] text-chaos-yellow">WORLD {hud.world}</div>
-            <div className="font-game text-base tracking-widest text-white">{waveIndicator}</div>
+            <div className="font-game text-sm tracking-widest text-white sm:text-base">{waveIndicator}</div>
           </div>
           <button
-            className="pointer-events-auto pixel-panel flex h-10 w-10 items-center justify-center text-lg transition-opacity hover:opacity-80 active:scale-95"
+            className="pointer-events-auto pixel-panel hidden h-10 w-10 items-center justify-center text-lg transition-opacity hover:opacity-80 active:scale-95 sm:flex"
             onClick={handleMuteToggle}
             title={isMuted ? 'Aktifkan audio' : 'Matikan audio'}
           >
-            {isMuted ? '🔇' : '🔊'}
+            {isMuted ? 'Mute' : 'Audio'}
           </button>
           <button
-            className="pointer-events-auto pixel-panel flex h-10 w-10 items-center justify-center transition-opacity hover:opacity-80 active:scale-95"
+            className="pointer-events-auto pixel-panel hidden h-10 w-10 items-center justify-center transition-opacity hover:opacity-80 active:scale-95 sm:flex"
             onClick={onPause}
             title="Pause"
             style={{ color: '#00f5ff' }}
@@ -106,7 +105,6 @@ export default function HUD({ onPause }: { onPause?: () => void }) {
         </div>
       </div>
 
-      {/* Wave transition overlay — center screen */}
       {waveTransition && (
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="pixel-panel animate-[fadeInOut_1.5s_ease-in-out] px-10 py-6 text-center shadow-2xl">
@@ -118,22 +116,25 @@ export default function HUD({ onPause }: { onPause?: () => void }) {
         </div>
       )}
 
-      {/* Special-fail toast — pojok kiri bawah area HP */}
       {showSpecialFail && (
-        <div className="absolute left-4 top-28 animate-[fadeOut_1.2s_ease-in-out_forwards] pixel-panel px-3 py-1">
+        <div className="absolute left-2 top-24 animate-[fadeOut_1.2s_ease-in-out_forwards] pixel-panel px-3 py-1 sm:left-4 sm:top-28">
           <span className="font-game text-sm font-bold text-chaos-red">Energi belum penuh!</span>
         </div>
       )}
 
-      {/* Baris bawah: power-up + bahan + hint */}
-      <div className="flex items-end justify-between gap-4">
+      <div className="flex items-end justify-between gap-2 sm:gap-4">
         <div className="flex flex-col gap-2">
           <PowerUpBar powerups={hud.powerups} />
           <IngredientSlot ingredients={hud.ingredients} maxSlots={4} />
         </div>
-        <span className="pixel-panel px-3 py-1">
+
+        <div className="pixel-panel block px-2 py-1 sm:hidden">
+          <ComboCounter hits={hud.combo.hits} multiplier={hud.combo.multiplier} score={hud.combo.score} />
+        </div>
+
+        <span className="pixel-panel hidden px-3 py-1 sm:inline-block">
           <span className="font-game text-xs text-white/90">
-            WASD gerak · J ringan · K berat · L special · F ambil · Q buang · E masak · tahan E = resep
+            WASD gerak - J ringan - K berat - L special - F ambil - Q buang - E masak
           </span>
         </span>
       </div>

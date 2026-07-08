@@ -12,6 +12,10 @@ export default class KokiBesar extends BaseEnemy {
       tint: 0xa55eea,
       drop: '🍗',
       spriteId: 'koki-besar',
+      attackCooldownMs: 1100,
+      attackWindupMs: 340,
+      attackDurationMs: 660,
+      attackLunge: 26,
     }, 'tex-enemy-besar');
     this.setScale(1.1);
   }

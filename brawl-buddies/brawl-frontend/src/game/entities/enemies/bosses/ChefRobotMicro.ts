@@ -14,6 +14,10 @@ export default class ChefRobotMicro extends BaseEnemy {
       tint: 0xeccc68,
       drop: '🍗',
       spriteId: 'chef-robot-micro',
+      attackCooldownMs: 780,
+      attackWindupMs: 230,
+      attackDurationMs: 480,
+      attackLunge: 24,
     });
     this.setScale(1.1);
   }

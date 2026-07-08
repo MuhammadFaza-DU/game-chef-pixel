@@ -44,6 +44,11 @@ body,
   height: 100%;
   background: #1a1a2e;
   overflow: hidden;
+  overscroll-behavior: none;
+}
+
+body {
+  -webkit-tap-highlight-color: transparent;
 }
 
 /* Canvas Phaser di-center, jaga aspect ratio 16:9 */
@@ -51,4 +56,13 @@ body,
   display: block;
   margin: 0 auto;
   image-rendering: pixelated;
+  touch-action: none;
+}
+
+@media (pointer: coarse) and (orientation: landscape) {
+  html,
+  body,
+  #root {
+    height: 100dvh;
+  }
 }

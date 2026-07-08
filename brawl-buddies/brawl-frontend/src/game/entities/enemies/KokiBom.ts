@@ -16,6 +16,10 @@ export default class KokiBom extends BaseEnemy {
       tint: 0x2ed573,
       drop: '🌶️',
       spriteId: 'koki-bom',
+      attackCooldownMs: 700,
+      attackWindupMs: 180,
+      attackDurationMs: 360,
+      attackLunge: 16,
     }, 'tex-enemy-bom');
   }
 

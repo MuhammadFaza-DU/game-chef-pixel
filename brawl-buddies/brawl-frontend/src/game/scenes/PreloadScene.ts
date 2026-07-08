@@ -45,7 +45,7 @@ export default class PreloadScene extends Phaser.Scene {
     this.makeStove('tex-stove', 72, 72);
     this.makeCircle('tex-ingredient', 16, 0xfff1c1);
     this.makeRect('tex-pixel', 4, 4, 0xffffff);
-    // React MainMenu sudah menangani halaman utama; langsung ke pilih karakter di world tersimpan.
+    // React MainMenu sudah menangani halaman utama; langsung ke world awal run aktif.
     const isTutorial = tutorialMode;
     setTutorialMode(false);
 
@@ -54,8 +54,8 @@ export default class PreloadScene extends Phaser.Scene {
       return;
     }
 
-    const currentWorld = usePlayerStore.getState().currentWorld;
-    this.scene.start('CharacterSelectScene', { world: currentWorld });
+    const startWorld = usePlayerStore.getState().getStartWorld();
+    this.scene.start('CharacterSelectScene', { world: startWorld });
   }
 
   // ----- Tekstur karakter ----------------------------------------------------

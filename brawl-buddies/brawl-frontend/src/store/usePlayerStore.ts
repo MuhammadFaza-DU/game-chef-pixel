@@ -4,6 +4,10 @@ import type { CharacterId } from '../game/entities/characters';
 
 export const LAST_WORLD = 4;
 
+function normalizeSavedWorld(world: number | null) {
+  return world && world >= 1 && world <= LAST_WORLD ? world : null;
+}
+
 interface PlayerState {
   username: string;
   selectedCharacter: CharacterId;
@@ -12,11 +16,14 @@ interface PlayerState {
   currentWorld: number;
   completedWorlds: number[];
   savedWorld: number | null;
+  hasSavedRun: () => boolean;
+  getStartWorld: () => number;
   setUsername: (name: string) => void;
   selectCharacter: (id: CharacterId) => void;
   submitScore: (score: number) => void;
   completeWorld: (world: number) => void;
   setSavedWorld: (world: number | null) => void;
+  clearSavedRun: () => void;
 }
 
 /** Profil pemain — persist ke localStorage (Guest Mode sesuai PRD). */
@@ -30,6 +37,10 @@ export const usePlayerStore = create<PlayerState>()(
       currentWorld: 1,
       completedWorlds: [],
       savedWorld: null,
+      hasSavedRun: () => normalizeSavedWorld(get().savedWorld) !== null,
+      getStartWorld: () => {
+        return normalizeSavedWorld(get().savedWorld) ?? 1;
+      },
       setUsername: (username) => set({ username }),
       selectCharacter: (selectedCharacter) => set({ selectedCharacter }),
       submitScore: (score) => set({ highScore: Math.max(get().highScore, score) }),
@@ -44,7 +55,8 @@ export const usePlayerStore = create<PlayerState>()(
           currentWorld: Math.max(state.currentWorld, nextWorld),
         };
       }),
-      setSavedWorld: (savedWorld) => set({ savedWorld }),
+      setSavedWorld: (savedWorld) => set({ savedWorld: normalizeSavedWorld(savedWorld) }),
+      clearSavedRun: () => set({ savedWorld: null, currentWorld: 1 }),
     }),
     { name: 'brawl-player' },
   ),

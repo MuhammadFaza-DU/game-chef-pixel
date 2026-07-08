@@ -12,21 +12,66 @@ import { useGameStore } from '../store/useGameStore';
 import { setTargetWorld } from '../game/targetWorld';
 import type { CharacterId } from '../game/entities/characters';
 
+type LockableOrientation = ScreenOrientation & {
+  lock?: (orientation: 'landscape' | 'portrait') => Promise<void>;
+};
+
 /** Halaman bermain: canvas Phaser + overlay HUD React. */
 export default function GamePage() {
   const [paused, setPaused] = useState(false);
   const [worldClear, setWorldClear] = useState<WorldClearData | null>(null);
+  const [needsLandscape, setNeedsLandscape] = useState(false);
+  const gameShellRef = useRef<HTMLDivElement>(null);
   const nav = useNavigate();
   const { saveScore } = useSaveData();
   const selectCharacter = usePlayerStore((s) => s.selectCharacter);
   const completeWorld = usePlayerStore((s) => s.completeWorld);
   const setSavedWorld = usePlayerStore((s) => s.setSavedWorld);
-  const savedWorld = usePlayerStore((s) => s.savedWorld);
+  const clearSavedRun = usePlayerStore((s) => s.clearSavedRun);
+  const getStartWorld = usePlayerStore((s) => s.getStartWorld);
 
-  // Terapkan savedWorld ke targetWorld saat halaman ini di-mount (sebelum CharacterSelectScene terbaca)
+  // Terapkan start world saat halaman ini di-mount (sebelum CharacterSelectScene terbaca)
   useEffect(() => {
-    setTargetWorld(savedWorld ?? 1);
-  }, [savedWorld]);
+    setTargetWorld(getStartWorld());
+  }, [getStartWorld]);
+
+  useEffect(() => {
+    const isTouch = () => 'ontouchstart' in window || window.matchMedia?.('(pointer: coarse)').matches === true;
+    const isPortrait = () => window.innerHeight > window.innerWidth;
+    const updateOrientationState = () => setNeedsLandscape(isTouch() && isPortrait());
+
+    const tryLockLandscape = async () => {
+      if (!isTouch()) return;
+      try {
+        await (screen.orientation as LockableOrientation | undefined)?.lock?.('landscape');
+      } catch {
+        updateOrientationState();
+      }
+    };
+
+    updateOrientationState();
+    void tryLockLandscape();
+    window.addEventListener('resize', updateOrientationState);
+    window.addEventListener('orientationchange', updateOrientationState);
+    window.addEventListener('pointerdown', tryLockLandscape, { once: true });
+
+    return () => {
+      window.removeEventListener('resize', updateOrientationState);
+      window.removeEventListener('orientationchange', updateOrientationState);
+      window.removeEventListener('pointerdown', tryLockLandscape);
+    };
+  }, []);
+
+  const handleEnterLandscape = async () => {
+    try {
+      await gameShellRef.current?.requestFullscreen?.();
+      await (screen.orientation as LockableOrientation | undefined)?.lock?.('landscape');
+    } catch {
+      // Browser iOS/Safari sering menolak lock; overlay akan hilang setelah device diputar manual.
+    } finally {
+      setNeedsLandscape(window.innerHeight > window.innerWidth);
+    }
+  };
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -98,11 +143,12 @@ export default function GamePage() {
   };
 
   const handlePauseRestart = () => {
-    const currentWorld = useGameStore.getState().world;
+    clearSavedRun();
+    setTargetWorld(1);
     // Resume dulu secara synchronous agar scene sudah aktif sebelum plugin.start() dipanggil
     EventBus.emit('game:resume');
     setPaused(false);
-    EventBus.emit('game:goto-char-select', { world: currentWorld });
+    EventBus.emit('game:goto-char-select', { world: 1 });
   };
 
   const handlePauseSaveExit = () => {
@@ -114,10 +160,26 @@ export default function GamePage() {
   };
 
   return (
-    <div className="relative h-screen w-screen overflow-hidden bg-chaos-ink">
+    <div ref={gameShellRef} className="relative h-screen w-screen overflow-hidden bg-chaos-ink">
       <PhaserGame />
       <HUD onPause={() => setPaused(true)} />
       <MobileControls onPause={() => setPaused(true)} />
+      {needsLandscape && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-chaos-ink px-6 text-center">
+          <div className="pixel-panel max-w-sm px-6 py-5">
+            <div className="font-pixel text-xs leading-relaxed text-chaos-yellow">MODE LANDSCAPE</div>
+            <p className="mt-3 font-game text-2xl leading-none text-white">
+              Putar HP ke samping untuk bermain.
+            </p>
+            <button
+              onClick={handleEnterLandscape}
+              className="mt-4 rounded border-2 border-chaos-yellow bg-chaos-yellow px-4 py-2 font-game text-xl font-bold text-chaos-ink active:scale-95"
+            >
+              Masuk Landscape
+            </button>
+          </div>
+        </div>
+      )}
       <PauseMenu
         open={paused}
         onResume={() => setPaused(false)}

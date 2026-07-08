@@ -14,6 +14,10 @@ export default class KasirMutan extends BaseEnemy {
       tint: 0x70a1ff,
       drop: '🧅',
       spriteId: 'kasir-mutan',
+      attackCooldownMs: 1100,
+      attackWindupMs: 340,
+      attackDurationMs: 680,
+      attackLunge: 30,
     });
     this.setScale(1.6);
   }

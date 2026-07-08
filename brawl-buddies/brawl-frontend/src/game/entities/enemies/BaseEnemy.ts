@@ -12,9 +12,13 @@ export interface EnemyConfig {
   drop: string;
   /** ID sprite dari ENEMY_SPRITES (mis. 'koki-biasa'). Kosongkan = pakai placeholder. */
   spriteId?: string;
+  attackCooldownMs?: number;
+  attackWindupMs?: number;
+  attackDurationMs?: number;
+  attackLunge?: number;
 }
 
-type EnemyAnimState = 'idle' | 'run' | 'hurt' | 'dead';
+type EnemyAnimState = 'idle' | 'run' | 'attack' | 'hurt' | 'dead';
 
 /**
  * Musuh dasar. Mengejar target terdekat, menyerang saat kontak.
@@ -34,6 +38,9 @@ export default class BaseEnemy extends Phaser.Physics.Arcade.Sprite {
   private animState: EnemyAnimState = 'idle';
   private isFrozen = false;
   private freezeRemaining = 0;
+  private attackPhase: 1 | 2 = 1;
+  private attackImpactEvent?: Phaser.Time.TimerEvent;
+  private attackEndEvent?: Phaser.Time.TimerEvent;
 
   constructor(scene: Phaser.Scene, x: number, y: number, cfg: EnemyConfig, fallbackTexKey = 'tex-enemy') {
     // Cek sprite sebelum super — boleh karena tidak pakai `this`
@@ -93,17 +100,23 @@ export default class BaseEnemy extends Phaser.Physics.Arcade.Sprite {
       if (this.freezeRemaining <= 0) {
         this.unfreeze();
       } else {
+        this.cancelAttack();
         this.setVelocity(0, 0);
         return;
       }
     }
 
     if (this.isStaggered) {
+      this.cancelAttack();
       this.setVelocity(0, 0);
       if (this.animState !== 'hurt') {
         this.animState = 'hurt';
         this.playEnemyAnim('hurt');
       }
+      return;
+    }
+
+    if (this.animState === 'attack') {
       return;
     }
 
@@ -166,6 +179,7 @@ export default class BaseEnemy extends Phaser.Physics.Arcade.Sprite {
 
   private triggerStagger() {
     this.isStaggered = true;
+    this.cancelAttack();
     this.setAngle(-8);
     this.scene.time.delayedCall(900, () => {
       this.isStaggered = false;
@@ -181,7 +195,41 @@ export default class BaseEnemy extends Phaser.Physics.Arcade.Sprite {
     return true;
   }
 
+  startAttack(target: Phaser.Math.Vector2, range: number, onImpact: () => void): boolean {
+    if (this.animState === 'dead' || this.animState === 'attack' || this.isFrozen || this.isStaggered) return false;
+    if (this.attackTimer > 0) return false;
+
+    const windup = this.cfg.attackWindupMs ?? this.getDefaultAttackWindup();
+    const duration = this.cfg.attackDurationMs ?? Math.max(windup + 180, 520);
+    const cooldown = this.cfg.attackCooldownMs ?? Math.max(duration + 360, 900);
+    this.attackTimer = cooldown;
+    this.animState = 'attack';
+
+    const dir = new Phaser.Math.Vector2(target.x - this.x, target.y - this.y);
+    if (dir.lengthSq() > 0) dir.normalize();
+    this.setFlipX(dir.x < 0);
+    this.setVelocity(0, 0);
+    this.playEnemyAttack();
+    this.playAttackLunge(dir);
+
+    this.attackImpactEvent = this.scene.time.delayedCall(windup, () => {
+      if (!this.active || this.animState !== 'attack' || this.isFrozen || this.isStaggered || this.hp <= 0) return;
+      if (Phaser.Math.Distance.Between(this.x, this.y, target.x, target.y) <= range) onImpact();
+    });
+
+    this.attackEndEvent = this.scene.time.delayedCall(duration, () => {
+      if (!this.active || this.animState === 'dead') return;
+      if (this.animState === 'attack') {
+        this.animState = 'idle';
+        this.playEnemyAnim('idle');
+      }
+    });
+
+    return true;
+  }
+
   destroy(fromScene?: boolean) {
+    this.cancelAttack();
     this.hpBar?.destroy();
     super.destroy(fromScene);
   }
@@ -208,5 +256,72 @@ export default class BaseEnemy extends Phaser.Physics.Arcade.Sprite {
     }
     this.play(key);
     if (onDone) this.once(`animationcomplete-${key}`, onDone);
+  }
+
+  private playEnemyAttack() {
+    const anim: AnimKey = this.attackPhase === 1 ? 'attack1' : 'attack2';
+    this.attackPhase = this.attackPhase === 1 ? 2 : 1;
+
+    if (!this.hasSprite || !this.cfg.spriteId) return;
+    const key = sheetKey(this.cfg.spriteId, anim);
+    const fallbackKey = sheetKey(this.cfg.spriteId, 'attack1');
+    const attackKey = this.scene.anims.exists(key) ? key : fallbackKey;
+    if (!this.scene.anims.exists(attackKey)) return;
+    this.play(attackKey);
+  }
+
+  private playAttackLunge(dir: Phaser.Math.Vector2) {
+    const distance = this.cfg.attackLunge ?? this.getDefaultAttackLunge();
+    const fromX = this.x;
+    const fromY = this.y;
+    const toX = Phaser.Math.Clamp(fromX + dir.x * distance, 24, this.scene.scale.width - 24);
+    const toY = Phaser.Math.Clamp(fromY + dir.y * distance, 24, this.scene.scale.height - 24);
+
+    this.scene.tweens.add({
+      targets: this,
+      x: toX,
+      y: toY,
+      scaleX: this.scaleX * 1.05,
+      scaleY: this.scaleY * 0.95,
+      duration: this.cfg.attackWindupMs ?? this.getDefaultAttackWindup(),
+      ease: 'Quad.easeOut',
+      yoyo: true,
+      onComplete: () => {
+        if (this.active) {
+          this.setScale(Math.abs(this.scaleX), Math.abs(this.scaleY));
+        }
+      },
+    });
+
+    if (!this.hasSprite) {
+      this.setTintFill(0xffffff);
+      this.scene.time.delayedCall(90, () => {
+        if (!this.active) return;
+        if (this.isFrozen) this.setTint(0x88ccff);
+        else this.setTint(this.cfg.tint);
+      });
+    }
+  }
+
+  private cancelAttack() {
+    this.attackImpactEvent?.remove(false);
+    this.attackEndEvent?.remove(false);
+    this.attackImpactEvent = undefined;
+    this.attackEndEvent = undefined;
+    if (this.animState === 'attack') this.animState = 'idle';
+  }
+
+  private getDefaultAttackWindup() {
+    if (this.cfg.damage >= 28) return 380;
+    if (this.cfg.damage >= 20) return 320;
+    if (this.cfg.damage >= 12) return 280;
+    return 220;
+  }
+
+  private getDefaultAttackLunge() {
+    if (this.cfg.damage >= 28) return 34;
+    if (this.cfg.damage >= 20) return 28;
+    if (this.cfg.damage >= 12) return 24;
+    return 18;
   }
 }

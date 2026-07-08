@@ -16,8 +16,10 @@ import { WORLDS } from '../levels';
 import type { EnemyKind } from '../levels/types';
 import { AnimationHelper } from '../utils/AnimationHelper';
 import { registerPause } from '../utils/pauseControls';
-import { ParallaxBackground } from '../utils/ParallaxBackground';
+import { ArenaBackground } from '../utils/ArenaBackground';
 import AudioManager from '../systems/AudioManager';
+import { setTargetWorld } from '../targetWorld';
+import { usePlayerStore } from '../../store/usePlayerStore';
 
 interface GameSceneData {
   characterId: CharacterId;
@@ -46,11 +48,7 @@ export default class GameScene extends Phaser.Scene {
   private cookKey!: Phaser.Input.Keyboard.Key;
   private pickupKey!: Phaser.Input.Keyboard.Key;
   private dropKey!: Phaser.Input.Keyboard.Key;
-  private eHoldMs = 0;
-  private recipeVisible = false;
-  private recipeContainer?: Phaser.GameObjects.Container;
   private nearIngredientPrompt!: Phaser.GameObjects.Text;
-  private parallax?: ParallaxBackground;
   private ultraAura!: Phaser.GameObjects.Graphics;
 
   constructor() {
@@ -62,12 +60,7 @@ export default class GameScene extends Phaser.Scene {
     this.waveIndex = 0;
     this.waveClearing = false;
     this.enemies = [];
-    const world = WORLDS[this.worldId];
-    if (world.bgLayers) {
-      this.parallax = new ParallaxBackground(this, world.bgLayers);
-    } else {
-      this.cameras.main.setBackgroundColor(world.bgColor);
-    }
+    new ArenaBackground(this, this.worldId);
 
     this.player = createPlayer(this, GAME_WIDTH / 2, GAME_HEIGHT / 2, data.characterId ?? 'mimi');
 
@@ -140,14 +133,10 @@ export default class GameScene extends Phaser.Scene {
 
   update(_t: number, delta: number) {
     if (!this.player?.body) return;
-    this.parallax?.update(this.player.x);
-    // nearStove & E-key diproses paling awal: resep bisa dibuka kapan saja,
-    // recipeVisible berfungsi sebagai soft-pause (update tetap jalan untuk deteksi keyup).
+    // nearStove & E-key diproses paling awal agar masak responsif di keyboard dan mobile.
     this.nearStove = Phaser.Math.Distance.Between(this.player.x, this.player.y, this.stove.x, this.stove.y) < 130;
     this.updateStoveGlow();
-    this.handleEKey(delta);
-    if (this.recipeVisible) return;
-
+    this.handleEKey();
     if (this.player.isDead) return this.gameOver();
 
     this.combo.tick(delta);
@@ -167,10 +156,15 @@ export default class GameScene extends Phaser.Scene {
         continue;
       }
 
-      // kontak = damage ke pemain
-      if (Phaser.Math.Distance.Between(e.x, e.y, this.player.x, this.player.y) < 56 && e.canAttack()) {
-        this.player.takeDamage(e.cfg.damage);
-        this.pushHud();
+      // Kontak memulai animasi attack; damage baru masuk di impact frame dan batal jika pemain menjauh.
+      const attackRange = 62;
+      if (Phaser.Math.Distance.Between(e.x, e.y, this.player.x, this.player.y) < attackRange) {
+        e.startAttack(target, attackRange, () => {
+          if (this.player.isDead) return;
+          if (Phaser.Math.Distance.Between(e.x, e.y, this.player.x, this.player.y) > attackRange) return;
+          this.player.takeDamage(e.cfg.damage);
+          this.pushHud();
+        });
       }
     }
 
@@ -284,51 +278,8 @@ export default class GameScene extends Phaser.Scene {
   }
 
   /** E tahan >=1.2 detik = lihat resep (di mana saja); lepas sebelum itu + dekat kompor = masak. */
-  private handleEKey(delta: number) {
-    if (this.cookKey.isDown) {
-      this.eHoldMs += delta;
-      if (this.eHoldMs >= 1200 && !this.recipeVisible) this.showRecipe();
-    } else if (this.eHoldMs > 0) {
-      if (!this.recipeVisible && this.nearStove) this.tryCook();
-      this.hideRecipe();
-      this.eHoldMs = 0;
-    }
-  }
-
-  private showRecipe() {
-    if (this.recipeVisible) return;
-    this.recipeVisible = true;
-    const cx = GAME_WIDTH / 2;
-    const cy = GAME_HEIGHT / 2;
-    const w = 400; const h = 290;
-    const bg = this.add.graphics()
-      .fillStyle(0x1a1a2e, 0.93).fillRoundedRect(cx - w / 2, cy - h / 2, w, h, 16)
-      .lineStyle(3, 0xffd93d, 1).strokeRoundedRect(cx - w / 2, cy - h / 2, w, h, 16);
-    const title = this.add.text(cx, cy - h / 2 + 22, '📖 BUKU RESEP', {
-      fontSize: '22px', fontStyle: 'bold', color: '#ffd93d',
-    }).setOrigin(0.5);
-    const rows = [
-      '🍗 + 🌶️  →  Ayam Geprek  (DMG ×1.5)',
-      '🍅 + 🧅  →  Sambal  (serangan AOE)',
-      '🍳 + 🧀  →  Omelet  (+40 HP)',
-      '🍌 + 🍦  →  Es Pisang  (bekukan musuh)',
-      '4 bahan BERBEDA  →  ✨ NASI GORENG KOSMIK ✨  (DMG ×3!)',
-    ];
-    const rowItems = rows.map((r, i) =>
-      this.add.text(cx, cy - h / 2 + 64 + i * 36, r, {
-        fontSize: '14px', color: '#ffffff', align: 'center',
-      }).setOrigin(0.5),
-    );
-    const hint = this.add.text(cx, cy + h / 2 - 18, 'Lepas [E] untuk menutup', {
-      fontSize: '12px', color: '#888888',
-    }).setOrigin(0.5);
-    this.recipeContainer = this.add.container(0, 0, [bg, title, ...rowItems, hint]).setDepth(30);
-  }
-
-  private hideRecipe() {
-    this.recipeContainer?.destroy();
-    this.recipeContainer = undefined;
-    this.recipeVisible = false;
+  private handleEKey() {
+    if (Phaser.Input.Keyboard.JustDown(this.cookKey) && this.nearStove) this.tryCook();
   }
 
   private tryCook() {
@@ -421,6 +372,8 @@ export default class GameScene extends Phaser.Scene {
   }
 
   private gameOver() {
+    setTargetWorld(1);
+    usePlayerStore.getState().clearSavedRun();
     AudioManager.stopBgm();
     AudioManager.sfx('gameover');
     this.scene.start('GameOverScene', { score: this.combo.snapshot().score, world: this.worldId });
