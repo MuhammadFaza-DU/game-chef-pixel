@@ -6,32 +6,27 @@ interface HealthBarProps {
   align?: 'left' | 'right';
 }
 
-/** Bar HP + energy bar dengan frame pixel art. */
 export default function HealthBar({ hp, maxHp, energy, name, align = 'left' }: HealthBarProps) {
   const pct = Math.max(0, (hp / maxHp) * 100);
+  const energyPct = Math.max(0, Math.min(100, energy));
   const isSpecialReady = energy >= 100;
-  const barColor = pct > 60 ? '#2ed573' : pct > 30 ? '#ffd93d' : '#ff4757';
+  const barColor = pct > 60 ? '#34c98f' : pct > 30 ? '#ffcf5a' : '#ff4c55';
 
   return (
-    <div className={`pixel-panel flex flex-col gap-1 p-2 sm:p-3 ${align === 'right' ? 'items-end' : 'items-start'}`}>
-      <span className="font-pixel text-[8px] leading-tight text-white drop-shadow sm:text-[11px]">{name}</span>
-      <div className="h-3 w-36 overflow-hidden rounded bg-black/60 sm:h-4 sm:w-52" style={{ border: '2px solid #1a1a2e' }}>
-        <div
-          className="h-full transition-all duration-150"
-          style={{ width: `${pct}%`, backgroundColor: barColor }}
-        />
+    <div className={`hud-panel flex min-w-[10.5rem] flex-col gap-1.5 p-2 sm:min-w-[15rem] sm:p-3 ${align === 'right' ? 'items-end' : 'items-start'}`}>
+      <div className="flex w-full items-center justify-between gap-2">
+        <span className="font-pixel text-[8px] leading-tight text-[#2c1621] sm:text-[10px]">{name}</span>
+        <span className="font-game text-base font-bold leading-none text-[#c4203d]">{Math.ceil(hp)}/{maxHp}</span>
       </div>
-      <div
-        className={`h-1.5 w-32 overflow-hidden rounded bg-black/60 transition-all sm:h-2 sm:w-44 ${
-          isSpecialReady ? 'shadow-[0_0_8px_2px_#ffd93d]' : ''
-        }`}
-        style={{ border: `1px solid ${isSpecialReady ? '#ffd93d' : '#1a1a2e'}` }}
-      >
-        <div className="h-full bg-chaos-yellow transition-all" style={{ width: `${energy}%` }} />
+      <div className="h-4 w-full overflow-hidden rounded-full border-2 border-[#2c1621] bg-[#1b1020]">
+        <div className="h-full rounded-full transition-all duration-150" style={{ width: `${pct}%`, backgroundColor: barColor }} />
+      </div>
+      <div className={`h-2.5 w-full overflow-hidden rounded-full border-2 bg-[#1b1020] ${isSpecialReady ? 'border-[#ffcf5a] shadow-[0_0_14px_rgba(255,207,90,.65)]' : 'border-[#2c1621]'}`}>
+        <div className="h-full rounded-full bg-[#ffcf5a] transition-all" style={{ width: `${energyPct}%` }} />
       </div>
       {isSpecialReady && (
-        <span className="font-game animate-pulse text-[11px] font-bold leading-none text-chaos-yellow drop-shadow sm:text-xs">
-          SPECIAL SIAP
+        <span className="font-game animate-pulse text-base font-bold leading-none text-[#c4203d] sm:text-lg">
+          Special siap!
         </span>
       )}
     </div>

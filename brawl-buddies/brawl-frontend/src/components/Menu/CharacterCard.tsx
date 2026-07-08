@@ -6,21 +6,21 @@ interface CharacterCardProps {
   onSelect?: () => void;
 }
 
-/** Kartu karakter di Character Select dengan frame pixel art. */
 export default function CharacterCard({ def, selected, onSelect }: CharacterCardProps) {
   return (
     <button
       onClick={onSelect}
-      className={`pixel-panel flex w-56 flex-col items-center gap-2 p-5 transition ${
-        selected ? 'scale-105 brightness-110' : 'hover:scale-105'
+      className={`chaos-card flex w-56 flex-col items-center gap-2 p-5 text-center transition ${
+        selected ? 'scale-105 brightness-105' : 'hover:-translate-y-1 hover:brightness-105'
       }`}
-      style={{ border: 'none', background: 'none' }}
     >
       <span className="text-6xl">{def.emoji}</span>
-      <span className="font-pixel text-xs leading-relaxed text-chaos-yellow">{def.name}</span>
-      <span className="font-game text-center text-sm text-white/90">{def.title}</span>
-      <span className="font-game mt-2 text-sm text-chaos-yellow">
-        SPD {def.stats.speed} · PWR {def.stats.power} · DEF {def.stats.defense}
+      <span className="font-impact-game text-3xl uppercase leading-none text-[#2c1621] [text-shadow:2px_2px_0_#ffcf5a]">
+        {def.name}
+      </span>
+      <span className="font-game text-center text-xl leading-none text-[#6d3b2d]">{def.title}</span>
+      <span className="order-ticket mt-2 px-2 py-1 font-pixel text-[9px] leading-relaxed text-[#c4203d]">
+        SPD {def.stats.speed} / PWR {def.stats.power} / DEF {def.stats.defense}
       </span>
     </button>
   );

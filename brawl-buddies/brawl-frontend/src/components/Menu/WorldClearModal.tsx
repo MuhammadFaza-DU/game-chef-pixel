@@ -1,5 +1,4 @@
 import Modal from '../common/Modal';
-import Button from '../common/Button';
 
 export interface WorldClearData {
   world: number;
@@ -13,19 +12,19 @@ interface WorldClearModalProps {
   onSaveExit: () => void;
 }
 
-/** Muncul saat boss kalah & masih ada world berikutnya. */
 export default function WorldClearModal({ data, onNext, onReselect, onSaveExit }: WorldClearModalProps) {
   return (
-    <Modal open={!!data} title={`🏆 WORLD ${data?.world ?? ''} BERHASIL DITAKLUKKAN!`}>
-      <div className="flex flex-col gap-3">
-        <p className="text-center text-lg font-bold text-chaos-yellow">Skor: {data?.score ?? 0}</p>
-        <Button onClick={onNext}>➡️ Lanjut World Berikutnya</Button>
-        <Button variant="ghost" onClick={onReselect}>
-          🔄 Pilih Ulang Karakter
-        </Button>
-        <Button variant="ghost" onClick={onSaveExit}>
-          💾 Simpan &amp; Keluar
-        </Button>
+    <Modal open={!!data} title={`World ${data?.world ?? ''} Takluk!`}>
+      <div className="flex w-[min(86vw,420px)] flex-col gap-3">
+        <div className="order-ticket px-4 py-4 text-center">
+          <p className="font-game text-2xl font-bold leading-none text-[#c4203d]">Order boss sudah gosong.</p>
+          <p className="mt-2 font-pixel text-[11px] leading-relaxed text-[#351827]">
+            SKOR {Number(data?.score ?? 0).toLocaleString('id-ID')}
+          </p>
+        </div>
+        <button className="chaos-button" onClick={onNext}>Lanjut World</button>
+        <button className="chaos-button secondary" onClick={onReselect}>Pilih Chef Lagi</button>
+        <button className="chaos-button dark" onClick={onSaveExit}>Simpan &amp; Keluar</button>
       </div>
     </Modal>
   );

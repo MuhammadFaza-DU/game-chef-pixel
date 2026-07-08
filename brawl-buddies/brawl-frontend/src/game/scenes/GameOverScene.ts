@@ -20,61 +20,84 @@ export default class GameOverScene extends Phaser.Scene {
     setTargetWorld(1);
     usePlayerStore.getState().clearSavedRun();
 
-    this.cameras.main.setBackgroundColor(win ? '#0d1f0d' : '#0d0d1a');
+    this.drawKitchenBackdrop(win);
 
-    const panelW = 560;
-    const panelH = 360;
+    const panelW = 620;
+    const panelH = 380;
     const panelX = (GAME_WIDTH - panelW) / 2;
     const panelY = (GAME_HEIGHT - panelH) / 2;
     const cx = GAME_WIDTH / 2;
 
-    // Panel
     const panel = this.add.graphics();
-    panel.fillStyle(0x000000, 0.72);
-    panel.fillRoundedRect(panelX, panelY, panelW, panelH, 20);
-    panel.lineStyle(3, win ? 0x2ed573 : 0xff4757, 1);
-    panel.strokeRoundedRect(panelX, panelY, panelW, panelH, 20);
+    panel.fillStyle(0x2c1621, 0.42);
+    panel.fillRoundedRect(panelX + 10, panelY + 12, panelW, panelH, 22);
+    panel.fillStyle(win ? 0xfff3c4 : 0x241421, 1);
+    panel.fillRoundedRect(panelX, panelY, panelW, panelH, 22);
+    panel.lineStyle(7, 0x2c1621, 1);
+    panel.strokeRoundedRect(panelX, panelY, panelW, panelH, 22);
+    panel.lineStyle(4, win ? 0xffcf5a : 0xff4c55, 1);
+    panel.strokeRoundedRect(panelX + 14, panelY + 14, panelW - 28, panelH - 28, 16);
 
-    // Judul
     this.add
-      .text(cx, panelY + 68, win ? '🏆 KAMU MENANG!' : '😵 GAME OVER!', {
-        fontSize: '52px',
+      .text(cx, panelY + 74, win ? 'ORDER SELESAI!' : 'DAPUR KACAU!', {
+        fontSize: '58px',
         fontStyle: 'bold',
-        color: win ? '#2ed573' : '#ff4757',
-        stroke: '#000000',
-        strokeThickness: 5,
+        color: win ? '#2c1621' : '#fff9e8',
+        stroke: win ? '#ffcf5a' : '#c4203d',
+        strokeThickness: 6,
       })
       .setOrigin(0.5);
 
-    // Skor
     this.add
-      .text(cx, panelY + 148, `Skor Kamu: ${data.score.toLocaleString('id-ID')}`, {
-        fontSize: '28px',
-        color: '#ffd93d',
+      .text(cx, panelY + 145, win ? 'Semua rival sudah tumbang.' : 'Chef tumbang. Dapur reset ke World 1.', {
+        fontSize: '25px',
+        color: win ? '#6d3b2d' : '#ffcf5a',
       })
       .setOrigin(0.5);
 
-    // World
     this.add
-      .text(cx, panelY + 192, `World Tercapai: World ${data.world}`, {
-        fontSize: '22px',
-        color: '#ffffff',
+      .text(cx, panelY + 195, `Skor: ${data.score.toLocaleString('id-ID')}   /   World: ${data.world}`, {
+        fontSize: '27px',
+        fontStyle: 'bold',
+        color: win ? '#c4203d' : '#fff9e8',
       })
       .setOrigin(0.5);
 
-    // Tombol utama — Main Lagi
-    this.makeBtn(cx, panelY + 268, '🔁  MAIN LAGI', 0xff4757, 0xff6b81, () => {
+    this.makeBtn(cx, panelY + 274, 'MAIN LAGI', 0xffcf5a, 0xffe67a, 0x2c1621, () => {
       setTargetWorld(1);
       usePlayerStore.getState().clearSavedRun();
       this.scene.start('CharacterSelectScene', { world: 1 });
     });
 
-    // Tombol sekunder — Menu Utama
-    this.makeBtn(cx, panelY + 326, '🏠  MENU UTAMA', 0x2f3542, 0x485460, () => {
+    this.makeBtn(cx, panelY + 334, 'MENU UTAMA', 0x4c2d50, 0x6a3a70, 0xfff9e8, () => {
       setTargetWorld(1);
       usePlayerStore.getState().clearSavedRun();
       EventBus.emit('game:goto-menu');
     });
+  }
+
+  private drawKitchenBackdrop(win: boolean) {
+    const g = this.add.graphics();
+    g.fillGradientStyle(win ? 0x22402a : 0x2b1231, win ? 0x22402a : 0x2b1231, 0x17111f, 0x17111f, 1);
+    g.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+    g.lineStyle(1, 0xffffff, 0.07);
+    for (let x = 0; x < GAME_WIDTH; x += 54) {
+      g.beginPath();
+      g.moveTo(x, 0);
+      g.lineTo(x, GAME_HEIGHT * 0.48);
+      g.strokePath();
+    }
+    for (let y = 0; y < GAME_HEIGHT * 0.48; y += 34) {
+      g.beginPath();
+      g.moveTo(0, y);
+      g.lineTo(GAME_WIDTH, y);
+      g.strokePath();
+    }
+    g.fillStyle(0x3f2431, 1);
+    g.fillRect(0, GAME_HEIGHT * 0.48, GAME_WIDTH, GAME_HEIGHT * 0.52);
+    g.fillStyle(win ? 0xffcf5a : 0xff4c55, 0.18);
+    g.fillCircle(180, 150, 160);
+    g.fillCircle(GAME_WIDTH - 150, GAME_HEIGHT - 120, 190);
   }
 
   private makeBtn(
@@ -83,29 +106,40 @@ export default class GameOverScene extends Phaser.Scene {
     label: string,
     color: number,
     hoverColor: number,
+    textColor: number,
     onClick: () => void,
   ) {
-    const W = 300;
-    const H = 46;
-
+    const W = 320;
+    const H = 48;
     const bg = this.add.graphics();
-    const draw = (c: number) => {
+
+    const draw = (c: number, lift = 0) => {
       bg.clear();
+      bg.fillStyle(0x2c1621, 1);
+      bg.fillRoundedRect(x - W / 2 + 5, y - H / 2 + 7 - lift, W, H, 11);
       bg.fillStyle(c, 1);
-      bg.fillRoundedRect(x - W / 2, y - H / 2, W, H, 10);
+      bg.fillRoundedRect(x - W / 2, y - H / 2 - lift, W, H, 11);
+      bg.lineStyle(4, 0x2c1621, 1);
+      bg.strokeRoundedRect(x - W / 2, y - H / 2 - lift, W, H, 11);
     };
     draw(color);
 
-    this.add
-      .text(x, y, label, { fontSize: '21px', fontStyle: 'bold', color: '#ffffff' })
+    const text = this.add
+      .text(x, y, label, { fontSize: '22px', fontStyle: 'bold', color: Phaser.Display.Color.IntegerToColor(textColor).rgba })
       .setOrigin(0.5)
       .setDepth(1);
 
     this.add
       .zone(x, y, W, H)
       .setInteractive({ useHandCursor: true })
-      .on('pointerover', () => draw(hoverColor))
-      .on('pointerout', () => draw(color))
+      .on('pointerover', () => {
+        draw(hoverColor, 3);
+        text.setY(y - 3);
+      })
+      .on('pointerout', () => {
+        draw(color);
+        text.setY(y);
+      })
       .on('pointerdown', onClick);
   }
 }

@@ -46,7 +46,7 @@ export default function TutorialPage() {
   };
 
   return (
-    <div className="h-screen w-screen overflow-hidden bg-chaos-ink">
+    <div className="h-screen w-screen overflow-hidden bg-[#17111f]">
       <PhaserGame />
       <StartRunChoiceModal
         open={showStartChoice}

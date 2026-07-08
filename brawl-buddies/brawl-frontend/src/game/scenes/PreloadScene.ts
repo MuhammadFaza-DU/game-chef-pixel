@@ -26,17 +26,18 @@ export default class PreloadScene extends Phaser.Scene {
     this.loadSpritesheets();
     this.loadBackgrounds();
     this.loadAudio();
-    this.load.spritesheet('fire-anim', 'sprites/fire.png', { frameWidth: 64, frameHeight: 64 });
   }
 
   create() {
     registerAllAnimations(this);
-    this.anims.create({
-      key: 'fire-burn',
-      frames: this.anims.generateFrameNumbers('fire-anim', { start: 0, end: 59 }),
-      frameRate: 20,
-      repeat: -1,
-    });
+    if (this.textures.exists('fire-anim')) {
+      this.anims.create({
+        key: 'fire-burn',
+        frames: this.anims.generateFrameNumbers('fire-anim', { start: 0, end: 59 }),
+        frameRate: 20,
+        repeat: -1,
+      });
+    }
     this.makeChef('tex-player', 64, 104, true); // pemain: bertopi koki
     this.makeChef('tex-enemy', 56, 92, false); // musuh biasa: tanpa topi, alis galak
     this.makeBig('tex-enemy-besar', 80, 104); // koki besar: bertubuh bongsor

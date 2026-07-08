@@ -4,11 +4,12 @@ import Button from '../components/common/Button';
 
 export default function LeaderboardPage() {
   const nav = useNavigate();
+
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-chaos-ink p-6">
+    <div className="kitchen-screen flex min-h-screen flex-col items-center justify-center gap-6 p-5 sm:p-8">
       <Leaderboard />
-      <Button variant="ghost" onClick={() => nav('/')}>
-        ← Kembali
+      <Button className="secondary" variant="ghost" onClick={() => nav('/')}>
+        Kembali Ke Menu
       </Button>
     </div>
   );

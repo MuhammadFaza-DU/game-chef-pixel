@@ -9,12 +9,12 @@ const DEADZONE = 16;
 const MAX_KNOB = 54;
 
 const ACTIONS = [
-  { inputKey: 'l', label: 'SP', sub: 'Special', tone: 'bg-chaos-red text-white', size: 'h-[4.5rem] w-[4.5rem]' },
-  { inputKey: 'k', label: 'K', sub: 'Berat', tone: 'bg-chaos-blue text-white', size: 'h-16 w-16' },
-  { inputKey: 'j', label: 'J', sub: 'Ringan', tone: 'bg-white text-chaos-ink', size: 'h-16 w-16' },
-  { inputKey: 'f', label: 'F', sub: 'Ambil', tone: 'bg-chaos-yellow text-chaos-ink', size: 'h-14 w-14' },
-  { inputKey: 'e', label: 'E', sub: 'Masak', tone: 'bg-orange-400 text-chaos-ink', size: 'h-14 w-14' },
-  { inputKey: 'q', label: 'Q', sub: 'Buang', tone: 'bg-slate-100 text-chaos-ink', size: 'h-14 w-14' },
+  { inputKey: 'l', label: 'SP', sub: 'Special', tone: 'action-red', size: 'h-[4.5rem] w-[4.5rem]' },
+  { inputKey: 'k', label: 'K', sub: 'Berat', tone: 'action-blue', size: 'h-16 w-16' },
+  { inputKey: 'j', label: 'J', sub: 'Ringan', tone: 'action-paper', size: 'h-16 w-16' },
+  { inputKey: 'f', label: 'F', sub: 'Ambil', tone: 'action-yellow', size: 'h-14 w-14' },
+  { inputKey: 'e', label: 'E', sub: 'Masak', tone: 'action-orange', size: 'h-14 w-14' },
+  { inputKey: 'q', label: 'Q', sub: 'Buang', tone: 'action-dark', size: 'h-14 w-14' },
 ] as const;
 
 export default function MobileControls({ onPause }: MobileControlsProps) {
@@ -113,7 +113,7 @@ export default function MobileControls({ onPause }: MobileControlsProps) {
           e.preventDefault();
           onPause();
         }}
-        className="pointer-events-auto absolute right-3 top-3 flex h-10 w-10 items-center justify-center rounded-full border-2 border-cyan-200/80 bg-chaos-ink/80 text-cyan-200 shadow-[0_0_14px_rgba(0,245,255,0.25)] active:scale-95"
+        className="pointer-events-auto absolute right-3 top-3 flex h-11 w-11 items-center justify-center rounded-full border-[3px] border-[#2c1621] bg-[#ffcf5a] text-[#2c1621] shadow-[4px_5px_0_#2c1621] active:translate-y-1 active:shadow-[2px_2px_0_#2c1621]"
         aria-label="Pause"
       >
         <span className="mb-0.5 font-pixel text-[10px] leading-none">II</span>
@@ -126,12 +126,12 @@ export default function MobileControls({ onPause }: MobileControlsProps) {
           onPointerMove={(e) => dragging.current && onJoyMove(e)}
           onPointerUp={onJoyEnd}
           onPointerCancel={onJoyEnd}
-          className="pointer-events-auto relative h-36 w-36 rounded-full border-[3px] border-cyan-100/70 bg-chaos-ink/55 shadow-[0_0_22px_rgba(0,245,255,0.18),inset_0_0_24px_rgba(0,0,0,0.45)]"
+          className="pointer-events-auto relative h-36 w-36 rounded-full border-[5px] border-[#2c1621] bg-[#fff7d8]/78 shadow-[7px_8px_0_rgba(44,22,33,.86),inset_0_6px_0_rgba(255,255,255,.38)]"
         >
-          <div className="absolute left-1/2 top-1/2 h-24 w-24 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/15" />
-          <div className="absolute left-1/2 top-1/2 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-cyan-100/70" />
+          <div className="absolute left-1/2 top-1/2 h-24 w-24 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-[#2c1621]/20" />
+          <div className="absolute left-1/2 top-1/2 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#2c1621]/55" />
           <div
-            className="absolute left-1/2 top-1/2 h-[4.4rem] w-[4.4rem] rounded-full border-[3px] border-chaos-ink bg-chaos-blue shadow-[0_8px_0_rgba(0,0,0,0.28),inset_0_4px_0_rgba(255,255,255,0.28)]"
+            className="absolute left-1/2 top-1/2 h-[4.4rem] w-[4.4rem] rounded-full border-[4px] border-[#2c1621] bg-[#4d96ff] shadow-[0_8px_0_rgba(44,22,33,.55),inset_0_5px_0_rgba(255,255,255,.3)]"
             style={{ transform: `translate(calc(-50% + ${knob.x}px), calc(-50% + ${knob.y}px))` }}
           />
         </div>
@@ -161,7 +161,7 @@ function ActionButton({ label, sub, tone, size, ...handlers }: ActionButtonProps
   return (
     <button
       {...handlers}
-      className={`pointer-events-auto flex ${size} touch-none flex-col items-center justify-center rounded-full border-[3px] border-chaos-ink ${tone} shadow-[0_7px_0_rgba(0,0,0,0.32),inset_0_4px_0_rgba(255,255,255,0.25)] transition-transform active:translate-y-1 active:scale-95 active:shadow-[0_3px_0_rgba(0,0,0,0.32)]`}
+      className={`mobile-action ${tone} pointer-events-auto flex ${size} touch-none flex-col items-center justify-center rounded-full border-[4px] border-[#2c1621] shadow-[0_7px_0_rgba(44,22,33,.72),inset_0_5px_0_rgba(255,255,255,.28)] transition-transform active:translate-y-1 active:scale-95 active:shadow-[0_3px_0_rgba(44,22,33,.72)]`}
     >
       <span className="font-pixel text-[11px] leading-none">{label}</span>
       <span className="mt-1 font-game text-base font-bold leading-none">{sub}</span>

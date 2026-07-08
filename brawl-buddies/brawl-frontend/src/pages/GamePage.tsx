@@ -165,15 +165,17 @@ export default function GamePage() {
       <HUD onPause={() => setPaused(true)} />
       <MobileControls onPause={() => setPaused(true)} />
       {needsLandscape && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-chaos-ink px-6 text-center">
-          <div className="pixel-panel max-w-sm px-6 py-5">
-            <div className="font-pixel text-xs leading-relaxed text-chaos-yellow">MODE LANDSCAPE</div>
-            <p className="mt-3 font-game text-2xl leading-none text-white">
-              Putar HP ke samping untuk bermain.
+        <div className="kitchen-screen fixed inset-0 z-[70] flex items-center justify-center px-6 text-center">
+          <div className="chaos-card max-w-sm px-6 py-6">
+            <div className="font-impact-game text-4xl leading-none text-[#2c1621] [text-shadow:2px_2px_0_#ffcf5a]">
+              Putar Dapur
+            </div>
+            <p className="mt-3 font-game text-2xl leading-none text-[#351827]">
+              HP harus landscape supaya kontrol tidak nutup arena.
             </p>
             <button
               onClick={handleEnterLandscape}
-              className="mt-4 rounded border-2 border-chaos-yellow bg-chaos-yellow px-4 py-2 font-game text-xl font-bold text-chaos-ink active:scale-95"
+              className="chaos-button mt-5 w-full"
             >
               Masuk Landscape
             </button>

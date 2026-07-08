@@ -48,4 +48,9 @@ export default class ComboSystem extends Phaser.Events.EventEmitter {
   snapshot() {
     return { hits: this.hits, multiplier: this.multiplier, score: this.score };
   }
+
+  setScore(score: number) {
+    this.score = Math.max(0, Math.floor(score));
+    this.emit('change', this.snapshot());
+  }
 }

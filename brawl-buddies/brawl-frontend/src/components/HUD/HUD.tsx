@@ -73,32 +73,32 @@ export default function HUD({ onPause }: { onPause?: () => void }) {
 
   return (
     <div className="pointer-events-none absolute inset-0 flex flex-col justify-between p-2 sm:p-4">
-      <BossHpBar />
+      <BossHpBar score={hud.combo.score} hits={hud.combo.hits} multiplier={hud.combo.multiplier} />
 
       <div className="flex items-start justify-between gap-2">
         <HealthBar hp={hud.hp} maxHp={hud.maxHp} energy={hud.energy} name={CHARACTERS[character].name} />
 
-        <div className="hidden sm:block">
+        <div className={`hidden sm:block ${hud.isBoss ? 'invisible' : ''}`}>
           <ComboCounter hits={hud.combo.hits} multiplier={hud.combo.multiplier} score={hud.combo.score} />
         </div>
 
         <div className="flex items-start gap-2">
-          <div className="pixel-panel px-2 py-1 text-center sm:px-4 sm:py-2">
-            <div className="font-pixel text-[8px] text-chaos-yellow">WORLD {hud.world}</div>
-            <div className="font-game text-sm tracking-widest text-white sm:text-base">{waveIndicator}</div>
+          <div className="hud-panel px-2 py-1 text-center sm:px-4 sm:py-2">
+            <div className="font-pixel text-[8px] text-[#c4203d]">WORLD {hud.world}</div>
+            <div className="font-game text-lg font-bold tracking-widest text-[#351827] sm:text-xl">{waveIndicator}</div>
           </div>
           <button
-            className="pointer-events-auto pixel-panel hidden h-10 w-10 items-center justify-center text-lg transition-opacity hover:opacity-80 active:scale-95 sm:flex"
+            className="pointer-events-auto hud-panel hidden h-10 w-12 items-center justify-center font-game text-base font-bold transition-opacity hover:opacity-85 active:scale-95 sm:flex"
             onClick={handleMuteToggle}
             title={isMuted ? 'Aktifkan audio' : 'Matikan audio'}
           >
-            {isMuted ? 'Mute' : 'Audio'}
+            {isMuted ? 'OFF' : 'ON'}
           </button>
           <button
-            className="pointer-events-auto pixel-panel hidden h-10 w-10 items-center justify-center transition-opacity hover:opacity-80 active:scale-95 sm:flex"
+            className="pointer-events-auto hud-panel hidden h-10 w-10 items-center justify-center transition-opacity hover:opacity-85 active:scale-95 sm:flex"
             onClick={onPause}
             title="Pause"
-            style={{ color: '#00f5ff' }}
+            style={{ color: '#c4203d' }}
           >
             <PauseIcon />
           </button>
@@ -107,18 +107,18 @@ export default function HUD({ onPause }: { onPause?: () => void }) {
 
       {waveTransition && (
         <div className="absolute inset-0 flex items-center justify-center">
-          <div className="pixel-panel animate-[fadeInOut_1.5s_ease-in-out] px-10 py-6 text-center shadow-2xl">
-            <div className="font-pixel text-sm leading-relaxed text-chaos-yellow drop-shadow-lg">
-              WAVE {waveTransition.wave} DIMULAI!
+          <div className="chaos-card animate-[fadeInOut_1.5s_ease-in-out] px-10 py-6 text-center shadow-2xl">
+            <div className="font-impact-game text-5xl leading-none text-[#2c1621] [text-shadow:3px_3px_0_#ffcf5a]">
+              Wave {waveTransition.wave}
             </div>
-            <div className="font-game mt-2 text-xl text-white/80">Siapkan dirimu...</div>
+            <div className="font-game mt-2 text-2xl leading-none text-[#c4203d]">Order baru masuk!</div>
           </div>
         </div>
       )}
 
       {showSpecialFail && (
-        <div className="absolute left-2 top-24 animate-[fadeOut_1.2s_ease-in-out_forwards] pixel-panel px-3 py-1 sm:left-4 sm:top-28">
-          <span className="font-game text-sm font-bold text-chaos-red">Energi belum penuh!</span>
+        <div className="absolute left-2 top-24 animate-[fadeOut_1.2s_ease-in-out_forwards] hud-panel px-3 py-1 sm:left-4 sm:top-28">
+          <span className="font-game text-lg font-bold leading-none text-[#c4203d]">Energi belum matang!</span>
         </div>
       )}
 
@@ -128,12 +128,12 @@ export default function HUD({ onPause }: { onPause?: () => void }) {
           <IngredientSlot ingredients={hud.ingredients} maxSlots={4} />
         </div>
 
-        <div className="pixel-panel block px-2 py-1 sm:hidden">
+        <div className="block sm:hidden">
           <ComboCounter hits={hud.combo.hits} multiplier={hud.combo.multiplier} score={hud.combo.score} />
         </div>
 
-        <span className="pixel-panel hidden px-3 py-1 sm:inline-block">
-          <span className="font-game text-xs text-white/90">
+        <span className={`hud-panel hidden px-3 py-1 sm:inline-block ${hud.isBoss ? 'max-w-[34rem]' : ''}`}>
+          <span className="font-game text-base font-bold leading-none text-[#351827]">
             WASD gerak - J ringan - K berat - L special - F ambil - Q buang - E masak
           </span>
         </span>

@@ -367,7 +367,11 @@ export default class GameScene extends Phaser.Scene {
       });
     } else {
       // semua wave selesai -> boss
-      this.scene.start('BossScene', { characterId: this.player.def.id, world: this.worldId });
+      this.scene.start('BossScene', {
+        characterId: this.player.def.id,
+        world: this.worldId,
+        score: this.combo.snapshot().score,
+      });
     }
   }
 

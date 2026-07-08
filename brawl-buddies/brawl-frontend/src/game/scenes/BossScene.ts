@@ -24,6 +24,7 @@ import { usePlayerStore } from '../../store/usePlayerStore';
 interface BossSceneData {
   characterId: CharacterId;
   world: number;
+  score?: number;
 }
 
 const BOSS_MAP = {
@@ -68,6 +69,9 @@ export default class BossScene extends Phaser.Scene {
   create(data: BossSceneData) {
     this.worldId = data.world ?? 1;
     this.defeated = false;
+    this.bossB = undefined;
+    this.bossBMaxHp = 0;
+    this.combo.setScore(data.score ?? 0);
     const world = WORLDS[this.worldId];
     new ArenaBackground(this, this.worldId, 0.88);
     this.add.rectangle(0, 0, GAME_WIDTH, GAME_HEIGHT, 0x000000, 0.18).setOrigin(0, 0).setDepth(-5);
@@ -375,12 +379,10 @@ export default class BossScene extends Phaser.Scene {
   private registerWorldClearActions() {
     const onNext = () => {
       cleanup();
-      this.scene.resume();
       this.scene.start('GameScene', { characterId: this.player.def.id, world: this.worldId + 1 });
     };
     const onReselect = () => {
       cleanup();
-      this.scene.resume();
       this.scene.start('CharacterSelectScene', { world: this.worldId + 1 });
     };
     const onSaveExit = () => cleanup();

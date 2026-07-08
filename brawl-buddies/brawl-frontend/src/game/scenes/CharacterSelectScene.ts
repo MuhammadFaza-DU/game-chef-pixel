@@ -5,9 +5,9 @@ import { EventBus } from '../EventBus';
 import { getTargetWorld } from '../targetWorld';
 
 const CARD_COLORS: Record<CharacterId, { neon: number; dark: number }> = {
-  mimi: { neon: 0x00f5ff, dark: 0x060e18 },
-  bobo: { neon: 0xffd93d, dark: 0x120d00 },
-  lala: { neon: 0xff3cac, dark: 0x12040e },
+  mimi: { neon: 0x4d96ff, dark: 0xfff3c4 },
+  bobo: { neon: 0xffcf5a, dark: 0xffe19a },
+  lala: { neon: 0xff4c55, dark: 0xffd4db },
 };
 
 export default class CharacterSelectScene extends Phaser.Scene {
@@ -17,15 +17,17 @@ export default class CharacterSelectScene extends Phaser.Scene {
 
   create(data?: { world?: number }) {
     const targetWorld = data?.world ?? getTargetWorld();
-    this.cameras.main.setBackgroundColor('#08081a');
+    this.cameras.main.setBackgroundColor('#2b1231');
 
     this.addScanlines();
     this.addTitle();
 
     if (targetWorld > 1) {
-      this.add.text(GAME_WIDTH / 2, 128, `▶ Akan memulai dari World ${targetWorld}`, {
+      this.add.text(GAME_WIDTH / 2, 178, `Akan memulai dari World ${targetWorld}`, {
         fontSize: '20px',
-        color: '#ffd93d',
+        color: '#ffcf5a',
+        stroke: '#2c1621',
+        strokeThickness: 4,
       }).setOrigin(0.5).setAlpha(0.9);
     }
 
@@ -34,13 +36,15 @@ export default class CharacterSelectScene extends Phaser.Scene {
 
     ids.forEach((id, i) => {
       const x = spacing * (i + 1);
-      const y = GAME_HEIGHT / 2;
+      const y = GAME_HEIGHT / 2 + 28;
       this.createCharacterCard(x, y, id, CHARACTERS[id], targetWorld);
     });
 
-    this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - 40, 'Klik kartu untuk memilih', {
+    this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - 92, 'Klik kartu untuk memilih', {
       fontSize: '22px',
       color: '#00f5ff',
+      stroke: '#2c1621',
+      strokeThickness: 4,
     }).setOrigin(0.5).setAlpha(0.85);
   }
 
@@ -56,13 +60,13 @@ export default class CharacterSelectScene extends Phaser.Scene {
   }
 
   private addTitle() {
-    const shadow = this.add.text(GAME_WIDTH / 2 + 3, 83, 'PILIH CHEF-MU', {
+    const shadow = this.add.text(GAME_WIDTH / 2 + 3, 143, 'PILIH CHEF-MU', {
       fontSize: '54px',
       fontStyle: 'bold',
       color: '#ff3cac',
     }).setOrigin(0.5).setAlpha(0.45);
 
-    const title = this.add.text(GAME_WIDTH / 2, 80, 'PILIH CHEF-MU', {
+    const title = this.add.text(GAME_WIDTH / 2, 140, 'PILIH CHEF-MU', {
       fontSize: '54px',
       fontStyle: 'bold',
       color: '#00f5ff',
@@ -74,11 +78,11 @@ export default class CharacterSelectScene extends Phaser.Scene {
       callback: () => {
         if (Math.random() < 0.03) {
           const offset = Phaser.Math.Between(-4, 4);
-          title.setPosition(GAME_WIDTH / 2 + offset, 80);
+          title.setPosition(GAME_WIDTH / 2 + offset, 140);
           title.setColor('#ff3cac');
           shadow.setColor('#00f5ff');
           this.time.delayedCall(60, () => {
-            title.setPosition(GAME_WIDTH / 2, 80);
+            title.setPosition(GAME_WIDTH / 2, 140);
             title.setColor('#00f5ff');
             shadow.setColor('#ff3cac');
           });
@@ -97,6 +101,7 @@ export default class CharacterSelectScene extends Phaser.Scene {
     const h = 358;
     const colors = CARD_COLORS[id];
     const neonHex = '#' + colors.neon.toString(16).padStart(6, '0');
+    const statsColor = id === 'bobo' ? '#c4203d' : neonHex;
 
     const container = this.add.container(x, y);
 
@@ -120,14 +125,14 @@ export default class CharacterSelectScene extends Phaser.Scene {
     const nameText = this.add.text(0, 42, c.name, {
       fontSize: '36px',
       fontStyle: 'bold',
-      color: '#ffffff',
+      color: '#2c1621',
       align: 'center',
     }).setOrigin(0.5);
     container.add(nameText);
 
     const titleText = this.add.text(0, 95, c.title, {
       fontSize: '19px',
-      color: '#b0b0d0',
+      color: '#6d3b2d',
       align: 'center',
       wordWrap: { width: w - 36 },
       lineSpacing: 5,
@@ -137,7 +142,7 @@ export default class CharacterSelectScene extends Phaser.Scene {
     const statsText = this.add.text(
       0, 155,
       `SPD ${c.stats.speed}  PWR ${c.stats.power}  DEF ${c.stats.defense}`,
-      { fontSize: '20px', fontStyle: 'bold', color: neonHex },
+      { fontSize: '20px', fontStyle: 'bold', color: statsColor, stroke: '#fff9e8', strokeThickness: id === 'bobo' ? 2 : 0 },
     ).setOrigin(0.5);
     container.add(statsText);
 
