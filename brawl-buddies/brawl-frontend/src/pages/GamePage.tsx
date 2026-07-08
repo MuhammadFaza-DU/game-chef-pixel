@@ -160,7 +160,7 @@ export default function GamePage() {
   };
 
   return (
-    <div ref={gameShellRef} className="relative h-screen w-screen overflow-hidden bg-chaos-ink">
+    <div ref={gameShellRef} className="relative h-dvh w-dvw overflow-hidden bg-chaos-ink">
       <PhaserGame />
       <HUD onPause={() => setPaused(true)} />
       <MobileControls onPause={() => setPaused(true)} />

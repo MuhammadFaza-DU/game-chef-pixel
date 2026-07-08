@@ -4,6 +4,7 @@ import { useGameStore } from '../../store/useGameStore';
 import { usePlayerStore } from '../../store/usePlayerStore';
 import { CHARACTERS } from '../../game/entities/characters';
 import AudioManager from '../../game/systems/AudioManager';
+import { isTouchDevice } from '../../game/input/virtualKeys';
 import HealthBar from './HealthBar';
 import ComboCounter from './ComboCounter';
 import IngredientSlot from './IngredientSlot';
@@ -31,6 +32,11 @@ export default function HUD({ onPause }: { onPause?: () => void }) {
   const [waveTransition, setWaveTransition] = useState<{ wave: number; total: number } | null>(null);
   const [showSpecialFail, setShowSpecialFail] = useState(false);
   const specialFailTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [isTouch, setIsTouch] = useState(false);
+
+  useEffect(() => {
+    setIsTouch(isTouchDevice());
+  }, []);
 
   const handleMuteToggle = () => {
     const next = AudioManager.toggle();
@@ -72,7 +78,7 @@ export default function HUD({ onPause }: { onPause?: () => void }) {
       ).join(' ');
 
   return (
-    <div className="pointer-events-none absolute inset-0 flex flex-col justify-between p-2 sm:p-4">
+    <div className="hud-safe-area pointer-events-none absolute inset-0 flex flex-col justify-between">
       <BossHpBar score={hud.combo.score} hits={hud.combo.hits} multiplier={hud.combo.multiplier} />
 
       <div className="flex items-start justify-between gap-2">
@@ -82,7 +88,7 @@ export default function HUD({ onPause }: { onPause?: () => void }) {
           <ComboCounter hits={hud.combo.hits} multiplier={hud.combo.multiplier} score={hud.combo.score} />
         </div>
 
-        <div className="flex items-start gap-2">
+        <div className="flex flex-wrap items-start justify-end gap-1.5 sm:gap-2">
           <div className="hud-panel px-2 py-1 text-center sm:px-4 sm:py-2">
             <div className="font-pixel text-[8px] text-[#c4203d]">WORLD {hud.world}</div>
             <div className="font-game text-lg font-bold tracking-widest text-[#351827] sm:text-xl">{waveIndicator}</div>
@@ -94,14 +100,16 @@ export default function HUD({ onPause }: { onPause?: () => void }) {
           >
             {isMuted ? 'OFF' : 'ON'}
           </button>
-          <button
-            className="pointer-events-auto hud-panel hidden h-10 w-10 items-center justify-center transition-opacity hover:opacity-85 active:scale-95 sm:flex"
-            onClick={onPause}
-            title="Pause"
-            style={{ color: '#c4203d' }}
-          >
-            <PauseIcon />
-          </button>
+          {!isTouch && (
+            <button
+              className="pointer-events-auto hud-panel hidden h-10 w-10 items-center justify-center transition-opacity hover:opacity-85 active:scale-95 sm:flex"
+              onClick={onPause}
+              title="Pause"
+              style={{ color: '#c4203d' }}
+            >
+              <PauseIcon />
+            </button>
+          )}
         </div>
       </div>
 
@@ -140,6 +148,20 @@ export default function HUD({ onPause }: { onPause?: () => void }) {
       </div>
 
       <style>{`
+        .hud-safe-area {
+          padding-top: max(0.5rem, env(safe-area-inset-top));
+          padding-right: max(0.5rem, env(safe-area-inset-right));
+          padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+          padding-left: max(0.5rem, env(safe-area-inset-left));
+        }
+        @media (min-width: 640px) {
+          .hud-safe-area {
+            padding-top: max(1rem, env(safe-area-inset-top));
+            padding-right: max(1rem, env(safe-area-inset-right));
+            padding-bottom: max(1rem, env(safe-area-inset-bottom));
+            padding-left: max(1rem, env(safe-area-inset-left));
+          }
+        }
         @keyframes fadeInOut {
           0%   { opacity: 0; transform: scale(0.85); }
           15%  { opacity: 1; transform: scale(1); }

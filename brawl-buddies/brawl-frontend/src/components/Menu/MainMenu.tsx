@@ -386,12 +386,14 @@ export default function MainMenu() {
 
         .character-side {
           position: relative;
+          min-width: 0;
           height: min(80vh, 38rem);
           min-height: 24rem;
           align-self: end;
           display: flex;
           justify-content: center;
           align-items: flex-end;
+          overflow: hidden;
         }
 
         .chef-side {
@@ -404,6 +406,7 @@ export default function MainMenu() {
 
         .order-board {
           position: relative;
+          min-width: 0;
           width: min(100%, 32rem);
           margin-inline: auto;
           padding: 1rem;
@@ -728,6 +731,25 @@ export default function MainMenu() {
           .prop-knife,
           .steam {
             display: none;
+          }
+        }
+
+        @media (max-width: 400px) {
+          .menu-stage {
+            grid-template-columns: .22fr 1.7fr .22fr;
+            padding-inline: .3rem;
+          }
+
+          .order-board {
+            padding: .25rem;
+          }
+
+          .brand-plaque {
+            padding: .55rem .55rem .65rem;
+          }
+
+          .brand-title {
+            font-size: clamp(2rem, 8vh, 3.2rem);
           }
         }
 

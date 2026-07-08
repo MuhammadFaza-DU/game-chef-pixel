@@ -107,19 +107,23 @@ export default function MobileControls({ onPause }: MobileControlsProps) {
   });
 
   return (
-    <div className="pointer-events-none absolute inset-0 z-30 select-none touch-none md:hidden">
+    <div className="pointer-events-none absolute inset-0 z-30 select-none touch-none">
       <button
         onPointerDown={(e) => {
           e.preventDefault();
           onPause();
         }}
-        className="pointer-events-auto absolute right-3 top-3 flex h-11 w-11 items-center justify-center rounded-full border-[3px] border-[#2c1621] bg-[#ffcf5a] text-[#2c1621] shadow-[4px_5px_0_#2c1621] active:translate-y-1 active:shadow-[2px_2px_0_#2c1621]"
+        style={{ top: 'calc(0.75rem + env(safe-area-inset-top))', right: 'calc(0.75rem + env(safe-area-inset-right))' }}
+        className="pointer-events-auto absolute flex h-11 w-11 items-center justify-center rounded-full border-[3px] border-[#2c1621] bg-[#ffcf5a] text-[#2c1621] shadow-[4px_5px_0_#2c1621] active:translate-y-1 active:shadow-[2px_2px_0_#2c1621]"
         aria-label="Pause"
       >
         <span className="mb-0.5 font-pixel text-[10px] leading-none">II</span>
       </button>
 
-      <div className="pointer-events-none absolute bottom-4 left-4 flex flex-col items-center gap-2">
+      <div
+        style={{ bottom: 'calc(1rem + env(safe-area-inset-bottom))', left: 'calc(1rem + env(safe-area-inset-left))' }}
+        className="pointer-events-none absolute flex flex-col items-center gap-2"
+      >
         <div
           ref={baseRef}
           onPointerDown={onJoyStart}
@@ -137,7 +141,10 @@ export default function MobileControls({ onPause }: MobileControlsProps) {
         </div>
       </div>
 
-      <div className="pointer-events-none absolute bottom-4 right-4 grid w-[15.5rem] grid-cols-3 grid-rows-2 items-end justify-items-end gap-2">
+      <div
+        style={{ bottom: 'calc(1rem + env(safe-area-inset-bottom))', right: 'calc(1rem + env(safe-area-inset-right))' }}
+        className="pointer-events-none absolute grid w-[15.5rem] grid-cols-3 grid-rows-2 items-end justify-items-end gap-2"
+      >
         {ACTIONS.map((action) => (
           <ActionButton key={action.inputKey} {...action} {...actionHandlers(action.inputKey)} />
         ))}
