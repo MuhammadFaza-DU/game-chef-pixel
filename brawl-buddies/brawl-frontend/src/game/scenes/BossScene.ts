@@ -15,11 +15,13 @@ import KasirMutan from '../entities/enemies/bosses/KasirMutan';
 import DuoMCMakan from '../entities/enemies/bosses/DuoMCMakan';
 import ChefBesarMangkukJahat from '../entities/enemies/bosses/ChefBesarMangkukJahat';
 import { AnimationHelper } from '../utils/AnimationHelper';
+import { showRecipeOverlay, hideRecipeOverlay } from '../utils/recipeOverlay';
 import { registerPause } from '../utils/pauseControls';
 import { ArenaBackground } from '../utils/ArenaBackground';
 import AudioManager from '../systems/AudioManager';
 import { setTargetWorld } from '../targetWorld';
 import { usePlayerStore } from '../../store/usePlayerStore';
+import { markHealUsed, trackCookedDish, trackBossDefeat } from '../achievementTracker';
 
 interface BossSceneData {
   characterId: CharacterId;
@@ -61,6 +63,9 @@ export default class BossScene extends Phaser.Scene {
   private nearStove = false;
   private nearIngredientPrompt!: Phaser.GameObjects.Text;
   private spawnTimer?: Phaser.Time.TimerEvent;
+  private cookKeyDownAt = 0;
+  private cookKeyHeld = false;
+  private recipeOverlay?: Phaser.GameObjects.Container;
 
   constructor() {
     super('BossScene');
@@ -90,17 +95,38 @@ export default class BossScene extends Phaser.Scene {
     this.player = createPlayer(this, GAME_WIDTH / 2, GAME_HEIGHT - 120, data.characterId ?? 'mimi');
 
     if (world.bossKey === 'DuoMCMakan') {
-      this.boss = new DuoMCMakan(this, GAME_WIDTH / 2 - 110, 180, 'besar') as BaseEnemy & { maxHp?: number };
+      const duoA = new DuoMCMakan(this, GAME_WIDTH / 2 - 110, 180, 'besar');
+      const duoB = new DuoMCMakan(this, GAME_WIDTH / 2 + 110, 180, 'kecil');
+      this.boss = duoA as unknown as BaseEnemy & { maxHp?: number };
       this.boss.setTexture('tex-boss');
-      this.bossB = new DuoMCMakan(this, GAME_WIDTH / 2 + 110, 180, 'kecil');
+      this.bossB = duoB;
       this.bossB.setTexture('tex-boss');
       this.bossBMaxHp = this.bossB.cfg.hp;
+      duoA.setPartner(duoB);
+      duoB.setPartner(duoA);
+      duoA.setArmed(true);
+      duoB.setArmed(false);
     } else {
       const BossClass = BOSS_MAP[world.bossKey];
       this.boss = new BossClass(this, GAME_WIDTH / 2, 200) as BaseEnemy & { maxHp?: number };
       this.boss.setTexture('tex-boss');
     }
     this.bossMaxHp = this.boss.cfg.hp;
+    // Hook serangan khusus boss -> damage player (laser, ring, lemparan, dsb).
+    this.boss.onHitPlayer = (dmg) => {
+      if (this.player.isDead || this.defeated) return;
+      this.player.takeDamage(dmg);
+      this.pushHud();
+      this.cameras.main.shake(140, 0.006);
+    };
+    if (this.bossB) {
+      this.bossB.onHitPlayer = (dmg) => {
+        if (this.player.isDead || this.defeated) return;
+        this.player.takeDamage(dmg);
+        this.pushHud();
+        this.cameras.main.shake(120, 0.005);
+      };
+    }
 
     // Kompor + bahan — pojok kanan bawah
     const sx = GAME_WIDTH - 130;
@@ -132,7 +158,6 @@ export default class BossScene extends Phaser.Scene {
     this.spawnIngredient();
 
     this.emitBossState();
-    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => EventBus.emit('boss-clear'));
     registerPause(this);
     this.registerWorldClearActions();
     this.pushHud();
@@ -149,7 +174,7 @@ export default class BossScene extends Phaser.Scene {
     // nearStove & E-key diproses paling awal agar masak responsif di keyboard dan mobile.
     this.nearStove = Phaser.Math.Distance.Between(this.player.x, this.player.y, this.stove.x, this.stove.y) < 130;
     this.updateStoveGlow();
-    this.handleEKey();
+    this.handleEKey(delta);
     if (this.player.isDead) {
       setTargetWorld(1);
       usePlayerStore.getState().clearSavedRun();
@@ -168,7 +193,8 @@ export default class BossScene extends Phaser.Scene {
     if (!this.defeated && this.boss.active) {
       this.boss.tick(delta, new Phaser.Math.Vector2(this.player.x, this.player.y));
       const bossRange = 86;
-      if (this.boss.hp > 0 && Phaser.Math.Distance.Between(this.boss.x, this.boss.y, this.player.x, this.player.y) < bossRange) {
+      if (this.boss.hp > 0 && !this.boss.isInvulnerable &&
+          Phaser.Math.Distance.Between(this.boss.x, this.boss.y, this.player.x, this.player.y) < bossRange) {
         this.boss.startAttack(new Phaser.Math.Vector2(this.player.x, this.player.y), bossRange, () => {
           if (this.player.isDead) return;
           if (Phaser.Math.Distance.Between(this.boss.x, this.boss.y, this.player.x, this.player.y) > bossRange) return;
@@ -180,7 +206,8 @@ export default class BossScene extends Phaser.Scene {
     if (!this.defeated && this.bossB?.active) {
       this.bossB.tick(delta, new Phaser.Math.Vector2(this.player.x, this.player.y));
       const bossBRange = 72;
-      if (this.bossB.hp > 0 && Phaser.Math.Distance.Between(this.bossB.x, this.bossB.y, this.player.x, this.player.y) < bossBRange) {
+      if (this.bossB.hp > 0 && !this.bossB.isInvulnerable &&
+          Phaser.Math.Distance.Between(this.bossB.x, this.bossB.y, this.player.x, this.player.y) < bossBRange) {
         this.bossB.startAttack(new Phaser.Math.Vector2(this.player.x, this.player.y), bossBRange, () => {
           if (this.player.isDead) return;
           if (!this.bossB?.active) return;
@@ -244,7 +271,11 @@ export default class BossScene extends Phaser.Scene {
     }
 
     this.powerups.apply(result);
-    if (result.healOnApply) this.player.hp = Math.min(this.player.maxHp, this.player.hp + result.healOnApply);
+    if (result.healOnApply) {
+      this.player.hp = Math.min(this.player.maxHp, this.player.hp + result.healOnApply);
+      markHealUsed();
+    }
+    trackCookedDish(result.id);
     AudioManager.sfx('cook');
     this.time.delayedCall(400, () => AudioManager.sfx('powerup'));
     this.cameras.main.flash(250, 255, 217, 61);
@@ -330,8 +361,27 @@ export default class BossScene extends Phaser.Scene {
   }
 
   /** E tahan >=1.2 detik = lihat resep (di mana saja); lepas sebelum itu + dekat kompor = masak. */
-  private handleEKey() {
-    if (Phaser.Input.Keyboard.JustDown(this.cookKey) && this.nearStove) this.tryCook();
+  private handleEKey(delta: number) {
+    if (Phaser.Input.Keyboard.JustDown(this.cookKey)) {
+      this.cookKeyHeld = true;
+      this.cookKeyDownAt = 0;
+      hideRecipeOverlay(this.recipeOverlay);
+      this.recipeOverlay = undefined;
+    }
+    if (this.cookKeyHeld && this.cookKey.isDown) {
+      this.cookKeyDownAt += delta;
+      if (this.cookKeyDownAt >= 1200 && !this.recipeOverlay) {
+        this.recipeOverlay = showRecipeOverlay(this);
+      }
+    }
+    if (Phaser.Input.Keyboard.JustUp(this.cookKey)) {
+      const heldLong = this.cookKeyDownAt >= 1200;
+      this.cookKeyHeld = false;
+      this.cookKeyDownAt = 0;
+      if (this.recipeOverlay) return; // resep terbuka — jangan masak saat lepas.
+      if (heldLong) return;
+      if (this.nearStove) this.tryCook();
+    }
   }
 
   private defeatBoss() {
@@ -344,6 +394,7 @@ export default class BossScene extends Phaser.Scene {
     AudioManager.sfx('world-clear', 0.9);
     this.cameras.main.flash(400, 255, 255, 255);
     EventBus.emit('boss-clear');
+    trackBossDefeat(this.worldId);
 
     const next = this.worldId + 1;
     const score = this.combo.snapshot().score;
@@ -354,8 +405,11 @@ export default class BossScene extends Phaser.Scene {
         EventBus.emit('world-clear', { world: this.worldId, score, character: this.player.def.id });
       });
     } else {
+      // Menang penuh (world terakhir): simpan completion + kirim skor sebelum ke layar game over.
       setTargetWorld(1);
+      usePlayerStore.getState().completeWorld(this.worldId);
       usePlayerStore.getState().clearSavedRun();
+      EventBus.emit('game:won', { score, world: this.worldId, character: this.player.def.id });
       this.scene.start('GameOverScene', { score, world: this.worldId, win: true });
     }
   }

@@ -50,7 +50,8 @@ export default class CombatSystem {
       const dead = e.takeDamage(dmg);
       const ang = Phaser.Math.Angle.Between(player.x, player.y, e.x, e.y);
       const kb = type === 'heavy' ? 320 : type === 'special' ? 420 : 140;
-      e.setVelocity(Math.cos(ang) * kb, Math.sin(ang) * kb);
+      const kbDuration = type === 'heavy' ? 260 : type === 'special' ? 320 : 140;
+      e.applyKnockback(Math.cos(ang) * kb, Math.sin(ang) * kb, kbDuration);
       if (dead && !killed.includes(e)) killed.push(e);
 
       // AOE: splash 50% ke musuh lain dalam radius 80px dari target

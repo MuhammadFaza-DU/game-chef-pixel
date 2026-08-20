@@ -8,7 +8,7 @@ export default class KokiBiasa extends BaseEnemy {
       hp: 24,
       speed: 110,
       damage: 6,
-      staggerThreshold: 18,
+      staggerThreshold: 16,
       tint: 0xff4757,
       drop: '🍅',
       spriteId: 'koki-biasa',

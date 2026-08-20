@@ -1,14 +1,14 @@
 import { useNavigate } from 'react-router-dom';
 import { usePlayerStore } from '../store/usePlayerStore';
 import { useAchievementStore } from '../store/useAchievementStore';
-import { CHARACTERS } from '../game/entities/characters';
+import { getCharacter } from '../game/entities/characters';
 import Button from '../components/common/Button';
 
 export default function ProfilePage() {
   const nav = useNavigate();
   const { username, setUsername, highScore, selectedCharacter } = usePlayerStore();
   const achievements = useAchievementStore((s) => s.achievements);
-  const selected = CHARACTERS[selectedCharacter];
+  const selected = getCharacter(selectedCharacter);
 
   return (
     <div className="kitchen-screen min-h-screen overflow-y-auto px-5 py-6 sm:px-8">

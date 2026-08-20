@@ -21,6 +21,7 @@ export default function MobileControls({ onPause }: MobileControlsProps) {
   const [show, setShow] = useState(false);
   const baseRef = useRef<HTMLDivElement>(null);
   const held = useRef<Set<string>>(new Set());
+  const actionHeld = useRef<Set<string>>(new Set());
   const dragging = useRef(false);
   const [knob, setKnob] = useState({ x: 0, y: 0 });
 
@@ -32,6 +33,9 @@ export default function MobileControls({ onPause }: MobileControlsProps) {
     return () => {
       for (const key of held.current) releaseKey(key);
       held.current.clear();
+      // Lepas juga tombol aksi yang masih ditekan agar tidak bocor ke scene berikutnya.
+      for (const key of actionHeld.current) releaseKey(key);
+      actionHeld.current.clear();
     };
   }, []);
 
@@ -97,13 +101,21 @@ export default function MobileControls({ onPause }: MobileControlsProps) {
       e.preventDefault();
       e.currentTarget.setPointerCapture(e.pointerId);
       pressKey(key);
+      actionHeld.current.add(key);
     },
     onPointerUp: (e: React.PointerEvent) => {
       e.preventDefault();
       releaseKey(key);
+      actionHeld.current.delete(key);
     },
-    onPointerCancel: () => releaseKey(key),
-    onPointerLeave: () => releaseKey(key),
+    onPointerCancel: () => {
+      releaseKey(key);
+      actionHeld.current.delete(key);
+    },
+    onPointerLeave: () => {
+      releaseKey(key);
+      actionHeld.current.delete(key);
+    },
   });
 
   return (

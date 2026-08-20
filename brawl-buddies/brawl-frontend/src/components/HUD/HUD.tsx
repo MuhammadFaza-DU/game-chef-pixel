@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { EventBus, type HudState } from '../../game/EventBus';
 import { useGameStore } from '../../store/useGameStore';
 import { usePlayerStore } from '../../store/usePlayerStore';
-import { CHARACTERS } from '../../game/entities/characters';
+import { getCharacter } from '../../game/entities/characters';
 import AudioManager from '../../game/systems/AudioManager';
 import { isTouchDevice } from '../../game/input/virtualKeys';
 import HealthBar from './HealthBar';
@@ -82,7 +82,7 @@ export default function HUD({ onPause }: { onPause?: () => void }) {
       <BossHpBar score={hud.combo.score} hits={hud.combo.hits} multiplier={hud.combo.multiplier} />
 
       <div className="flex items-start justify-between gap-2">
-        <HealthBar hp={hud.hp} maxHp={hud.maxHp} energy={hud.energy} name={CHARACTERS[character].name} />
+        <HealthBar hp={hud.hp} maxHp={hud.maxHp} energy={hud.energy} name={getCharacter(character).name} />
 
         <div className={`hidden sm:block ${hud.isBoss ? 'invisible' : ''}`}>
           <ComboCounter hits={hud.combo.hits} multiplier={hud.combo.multiplier} score={hud.combo.score} />

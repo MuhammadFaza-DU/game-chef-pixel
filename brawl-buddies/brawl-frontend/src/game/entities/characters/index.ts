@@ -56,3 +56,11 @@ export const CHARACTERS: Record<CharacterId, CharacterDef> = {
     special: 'Sweet Barrage',
   },
 };
+
+/**
+ * Ambil definisi karakter dengan fallback aman ke mimi.
+ * Melindungi dari nilai localStorage basi/rusak yang bisa memicu TypeError.
+ */
+export function getCharacter(id: string | null | undefined): CharacterDef {
+  return CHARACTERS[id as CharacterId] ?? CHARACTERS.mimi;
+}

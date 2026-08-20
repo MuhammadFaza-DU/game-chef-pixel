@@ -31,16 +31,22 @@ export default class BaseEnemy extends Phaser.Physics.Arcade.Sprite {
   hp: number;
   isStaggered = false;
   readonly hasSprite: boolean;
+  /** Callback damage ke player untuk serangan khusus boss (laser, proyektil, dsb). Diisi BossScene. */
+  onHitPlayer?: (damage: number) => void;
 
   private attackTimer = 0;
   private recentDamage = 0;
   private hpBar: Phaser.GameObjects.Graphics;
-  private animState: EnemyAnimState = 'idle';
+  protected animState: EnemyAnimState = 'idle';
   private isFrozen = false;
   private freezeRemaining = 0;
   private attackPhase: 1 | 2 = 1;
   private attackImpactEvent?: Phaser.Time.TimerEvent;
   private attackEndEvent?: Phaser.Time.TimerEvent;
+  private knockbackTimer = 0;
+  private knockbackVx = 0;
+  private knockbackVy = 0;
+  private invulnerable = false;
 
   constructor(scene: Phaser.Scene, x: number, y: number, cfg: EnemyConfig, fallbackTexKey = 'tex-enemy') {
     // Cek sprite sebelum super — boleh karena tidak pakai `this`
@@ -116,6 +122,14 @@ export default class BaseEnemy extends Phaser.Physics.Arcade.Sprite {
       return;
     }
 
+    // Knockback window: biar dorongan heavy/special terasa, jangan ditimpa
+    // decideMove sebelum jendela knockback habis.
+    if (this.knockbackTimer > 0) {
+      this.knockbackTimer -= delta;
+      this.setVelocity(this.knockbackVx, this.knockbackVy);
+      return;
+    }
+
     if (this.animState === 'attack') {
       return;
     }
@@ -139,6 +153,28 @@ export default class BaseEnemy extends Phaser.Physics.Arcade.Sprite {
     this.setTint(0x88ccff);
   }
 
+  /** Status beku (dipakai sistem lain untuk cek perilaku, mis. bom beku tak meledak). */
+  get frozen() {
+    return this.isFrozen;
+  }
+
+  /** Status kebal damage (boss saat bersembunyi/transformasi). */
+  setInvulnerable(v: boolean) {
+    this.invulnerable = v;
+  }
+
+  get isInvulnerable() {
+    return this.invulnerable;
+  }
+
+  /** Terapkan dorongan knockback; gerak musuh terkunci sejenak agar dorongan terasa. */
+  applyKnockback(vx: number, vy: number, duration = 160) {
+    this.knockbackVx = vx;
+    this.knockbackVy = vy;
+    this.knockbackTimer = duration;
+    this.setVelocity(vx, vy);
+  }
+
   private unfreeze() {
     this.isFrozen = false;
     this.freezeRemaining = 0;
@@ -152,6 +188,7 @@ export default class BaseEnemy extends Phaser.Physics.Arcade.Sprite {
   /** @returns true jika musuh mati akibat hit ini. */
   takeDamage(amount: number): boolean {
     if (this.animState === 'dead') return true;
+    if (this.invulnerable) return false;
     this.hp -= amount;
     this.recentDamage += amount;
 
@@ -236,7 +273,7 @@ export default class BaseEnemy extends Phaser.Physics.Arcade.Sprite {
 
   // ─── Animasi internal ──────────────────────────────────────────────────────
 
-  private playEnemyAnim(state: 'idle' | 'run' | 'hurt') {
+  protected playEnemyAnim(state: 'idle' | 'run' | 'hurt') {
     if (!this.hasSprite || !this.cfg.spriteId) return;
     const key = sheetKey(this.cfg.spriteId, state);
     if (!this.scene.anims.exists(key)) return;
@@ -258,7 +295,7 @@ export default class BaseEnemy extends Phaser.Physics.Arcade.Sprite {
     if (onDone) this.once(`animationcomplete-${key}`, onDone);
   }
 
-  private playEnemyAttack() {
+  protected playEnemyAttack() {
     const anim: AnimKey = this.attackPhase === 1 ? 'attack1' : 'attack2';
     this.attackPhase = this.attackPhase === 1 ? 2 : 1;
 
@@ -303,7 +340,7 @@ export default class BaseEnemy extends Phaser.Physics.Arcade.Sprite {
     }
   }
 
-  private cancelAttack() {
+  protected cancelAttack() {
     this.attackImpactEvent?.remove(false);
     this.attackEndEvent?.remove(false);
     this.attackImpactEvent = undefined;

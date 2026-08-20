@@ -15,11 +15,13 @@ import PowerUpSystem from '../systems/PowerUpSystem';
 import { WORLDS } from '../levels';
 import type { EnemyKind } from '../levels/types';
 import { AnimationHelper } from '../utils/AnimationHelper';
+import { showRecipeOverlay, hideRecipeOverlay } from '../utils/recipeOverlay';
 import { registerPause } from '../utils/pauseControls';
 import { ArenaBackground } from '../utils/ArenaBackground';
 import AudioManager from '../systems/AudioManager';
 import { setTargetWorld } from '../targetWorld';
 import { usePlayerStore } from '../../store/usePlayerStore';
+import { startLevel, markHealUsed, trackCookedDish } from '../achievementTracker';
 
 interface GameSceneData {
   characterId: CharacterId;
@@ -50,6 +52,9 @@ export default class GameScene extends Phaser.Scene {
   private dropKey!: Phaser.Input.Keyboard.Key;
   private nearIngredientPrompt!: Phaser.GameObjects.Text;
   private ultraAura!: Phaser.GameObjects.Graphics;
+  private cookKeyDownAt = 0;
+  private cookKeyHeld = false;
+  private recipeOverlay?: Phaser.GameObjects.Container;
 
   constructor() {
     super('GameScene');
@@ -63,6 +68,8 @@ export default class GameScene extends Phaser.Scene {
     new ArenaBackground(this, this.worldId);
 
     this.player = createPlayer(this, GAME_WIDTH / 2, GAME_HEIGHT / 2, data.characterId ?? 'mimi');
+
+    startLevel(this.worldId);
 
     // Kompor — pojok kanan bawah agar tidak tertutup HUD
     const sx = GAME_WIDTH - 130;
@@ -136,7 +143,7 @@ export default class GameScene extends Phaser.Scene {
     // nearStove & E-key diproses paling awal agar masak responsif di keyboard dan mobile.
     this.nearStove = Phaser.Math.Distance.Between(this.player.x, this.player.y, this.stove.x, this.stove.y) < 130;
     this.updateStoveGlow();
-    this.handleEKey();
+    this.handleEKey(delta);
     if (this.player.isDead) return this.gameOver();
 
     this.combo.tick(delta);
@@ -150,8 +157,8 @@ export default class GameScene extends Phaser.Scene {
       if (!e.active) continue;
       e.tick(delta, target);
 
-      // Koki Bom: cek ledakan
-      if (e instanceof KokiBom && e.tickFuse(delta)) {
+      // Koki Bom: cek ledakan — bom beku justru menunda fuse (masak strategi membekukan bomber)
+      if (e instanceof KokiBom && !e.frozen && e.tickFuse(delta)) {
         this.explode(e);
         continue;
       }
@@ -188,6 +195,9 @@ export default class GameScene extends Phaser.Scene {
       this.player.addEnergy(type === 'special' ? 0 : 6);
       AnimationHelper.comicPop(this, this.player.x, this.player.y - 60);
       if (this.combo.snapshot().multiplier > prevMult) AudioManager.sfx('combo');
+    } else if (type === 'special') {
+      // Special selalu menguras energi walau meleset — HUD harus ikut update.
+      this.pushHud();
     }
     for (const e of killed) this.killEnemy(e);
   }
@@ -278,8 +288,29 @@ export default class GameScene extends Phaser.Scene {
   }
 
   /** E tahan >=1.2 detik = lihat resep (di mana saja); lepas sebelum itu + dekat kompor = masak. */
-  private handleEKey() {
-    if (Phaser.Input.Keyboard.JustDown(this.cookKey) && this.nearStove) this.tryCook();
+  private handleEKey(delta: number) {
+    if (Phaser.Input.Keyboard.JustDown(this.cookKey)) {
+      this.cookKeyHeld = true;
+      this.cookKeyDownAt = 0;
+      hideRecipeOverlay(this.recipeOverlay);
+      this.recipeOverlay = undefined;
+    }
+    if (this.cookKeyHeld && this.cookKey.isDown) {
+      this.cookKeyDownAt += delta;
+      if (this.cookKeyDownAt >= 1200 && !this.recipeOverlay) {
+        this.recipeOverlay = showRecipeOverlay(this);
+      }
+    }
+    if (Phaser.Input.Keyboard.JustUp(this.cookKey)) {
+      const heldLong = this.cookKeyDownAt >= 1200;
+      this.cookKeyHeld = false;
+      this.cookKeyDownAt = 0;
+      if (this.recipeOverlay) {
+        // Resep sudah terbuka — lepas tombol tidak masak.
+        return;
+      }
+      if (!heldLong && this.nearStove) this.tryCook();
+    }
   }
 
   private tryCook() {
@@ -293,7 +324,11 @@ export default class GameScene extends Phaser.Scene {
     }
 
     this.powerups.apply(result);
-    if (result.healOnApply) this.player.hp = Math.min(this.player.maxHp, this.player.hp + result.healOnApply);
+    if (result.healOnApply) {
+      this.player.hp = Math.min(this.player.maxHp, this.player.hp + result.healOnApply);
+      markHealUsed();
+    }
+    trackCookedDish(result.id);
     AudioManager.sfx('cook');
     this.time.delayedCall(400, () => AudioManager.sfx('powerup'));
     this.cameras.main.flash(250, 255, 217, 61);

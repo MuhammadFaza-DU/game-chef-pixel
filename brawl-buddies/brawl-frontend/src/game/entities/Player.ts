@@ -73,10 +73,19 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     const v = this.def.moveSpeed;
     let vx = 0;
     let vy = 0;
-    if (this.keys.left.isDown) vx -= v;
-    if (this.keys.right.isDown) vx += v;
-    if (this.keys.up.isDown) vy -= v;
-    if (this.keys.down.isDown) vy += v;
+    if (this.keys.left.isDown) vx -= 1;
+    if (this.keys.right.isDown) vx += 1;
+    if (this.keys.up.isDown) vy -= 1;
+    if (this.keys.down.isDown) vy += 1;
+    // Normalisasi diagonal agar kecepatan konsisten (tanpa ini diagonal ~41% lebih cepat).
+    if (vx !== 0 && vy !== 0) {
+      const inv = Math.SQRT1_2;
+      vx *= v * inv;
+      vy *= v * inv;
+    } else {
+      vx *= v;
+      vy *= v;
+    }
     this.setVelocity(vx, vy);
 
     if (vx !== 0) {

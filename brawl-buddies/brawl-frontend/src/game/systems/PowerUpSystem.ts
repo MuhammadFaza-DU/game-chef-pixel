@@ -27,10 +27,15 @@ export default class PowerUpSystem extends Phaser.Events.EventEmitter {
     this.emit('change', this.list());
   }
 
-  /** Total pengali damage dari semua power-up aktif. */
+  /**
+   * Total pengali damage dari semua power-up aktif.
+   * Ambil multiplier TERBESAR (bukan dikali), lalu efek (aoe/freeze/ultra)
+   * tetap digabung lewat `has()`. Mencegah stack eksplosion — Ayam Geprek + Nasi
+   * Kosmik = 3x (bukan 4.5x).
+   */
   get damageMultiplier() {
     let m = 1;
-    for (const { def } of this.active.values()) m *= def.damageMultiplier;
+    for (const { def } of this.active.values()) m = Math.max(m, def.damageMultiplier);
     return m;
   }
 

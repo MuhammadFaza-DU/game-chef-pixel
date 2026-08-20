@@ -84,12 +84,17 @@ export default function GamePage() {
 
   // Freeze/unfreeze scene Phaser yang sedang aktif (bukan sekadar overlay).
   const hasPauseStateChanged = useRef(false);
+  const manualResumeHandled = useRef(false);
   useEffect(() => {
     if (!hasPauseStateChanged.current) {
       hasPauseStateChanged.current = true;
       if (!paused) return;
     }
-
+    // Jika resume sudah di-emit manual dari handler (restart/save-exit), lewati.
+    if (!paused && manualResumeHandled.current) {
+      manualResumeHandled.current = false;
+      return;
+    }
     EventBus.emit(paused ? 'game:pause' : 'game:resume');
   }, [paused]);
 
@@ -101,6 +106,16 @@ export default function GamePage() {
       EventBus.off('world-clear', onWorldClear);
     };
   }, []);
+
+  // Menang penuh (world terakhir) -> simpan completion + skor seperti modal World Clear.
+  useEffect(() => {
+    const onWon = (data: { score: number; world: number }) => {
+      completeWorld(data.world);
+      saveScore(data.score);
+    };
+    EventBus.on('game:won', onWon);
+    return () => { EventBus.off('game:won', onWon); };
+  }, [completeWorld, saveScore]);
 
   // CharacterSelectScene -> sinkron ke Zustand store.
   useEffect(() => {
@@ -146,6 +161,7 @@ export default function GamePage() {
     clearSavedRun();
     setTargetWorld(1);
     // Resume dulu secara synchronous agar scene sudah aktif sebelum plugin.start() dipanggil
+    manualResumeHandled.current = true;
     EventBus.emit('game:resume');
     setPaused(false);
     EventBus.emit('game:goto-char-select', { world: 1 });
@@ -154,6 +170,7 @@ export default function GamePage() {
   const handlePauseSaveExit = () => {
     const currentWorld = useGameStore.getState().world;
     setSavedWorld(currentWorld);
+    manualResumeHandled.current = true;
     setPaused(false);
     EventBus.emit('game:resume');
     nav('/');
