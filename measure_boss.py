@@ -2,11 +2,11 @@ from PIL import Image
 import os
 
 packs = {
-  'hero-knight': 'D:/Progamming/Project dan SourceCode/BEBAS CAMPURAN/Game Action Koki/Aset ZIP/extracted/hero-knight/Hero Knight/Sprites',
-  'hero-knight-2': 'D:/Progamming/Project dan SourceCode/BEBAS CAMPURAN/Game Action Koki/Aset ZIP/extracted/hero-knight-2/Hero Knight 2/Sprites',
-  'medieval-king': 'D:/Progamming/Project dan SourceCode/BEBAS CAMPURAN/Game Action Koki/Aset ZIP/extracted/medieval-king/Medieval King Pack',
-  'fantasy-warrior': 'D:/Progamming/Project dan SourceCode/BEBAS CAMPURAN/Game Action Koki/Aset ZIP/extracted/fantasy-warrior/Fantasy Warrior/Sprites',
-  'evil-wizard-2': 'D:/Progamming/Project dan SourceCode/BEBAS CAMPURAN/Game Action Koki/Aset ZIP/extracted/evil-wizard-2/EVil Wizard 2/Sprites',
+  'hero-knight': 'D:/Progamming/Project-SourceCode/BEBAS CAMPURAN/Game Action Koki/Aset ZIP/extracted/hero-knight/Hero Knight/Sprites',
+  'hero-knight-2': 'D:/Progamming/Project-SourceCode/BEBAS CAMPURAN/Game Action Koki/Aset ZIP/extracted/hero-knight-2/Hero Knight 2/Sprites',
+  'medieval-king': 'D:/Progamming/Project-SourceCode/BEBAS CAMPURAN/Game Action Koki/Aset ZIP/extracted/medieval-king/Medieval King Pack',
+  'fantasy-warrior': 'D:/Progamming/Project-SourceCode/BEBAS CAMPURAN/Game Action Koki/Aset ZIP/extracted/fantasy-warrior/Fantasy Warrior/Sprites',
+  'evil-wizard-2': 'D:/Progamming/Project-SourceCode/BEBAS CAMPURAN/Game Action Koki/Aset ZIP/extracted/evil-wizard-2/EVil Wizard 2/Sprites',
 }
 
 for pack, path in packs.items():
